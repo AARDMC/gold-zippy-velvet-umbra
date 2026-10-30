@@ -1,0 +1,83 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Source Sans 3", "Segoe UI", sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --color-ink: #07131c;
+  --color-ink-2: #0c1c2a;
+  --color-panel: #102433;
+  --color-panel-2: #163044;
+  --color-line: #2a4256;
+  --color-line-2: #3b5870;
+  --color-fg: #e7eef6;
+  --color-muted: #8ea6bd;
+  --color-sky: #3cb4e8;
+  --color-em: #2fbf8f;
+  --color-amber: #e6b34d;
+  --color-rose: #f07184;
+  --radius-card: 1.125rem;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  input, select, textarea {
+    font: inherit;
+    color: inherit;
+  }
+  select option { background: var(--color-ink-2); color: var(--color-fg); }
+}
+
+@layer base {
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility shadow-card {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fall {
+  to { transform: translateY(110vh) rotate(540deg); opacity: 0; }
+}
+@keyframes pulse-ring {
+  50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-sky) 25%, transparent); }
+}
+
+.rise { animation: rise 0.35s ease both; }
+.pulse-ring { animation: pulse-ring 2.4s ease-in-out infinite; }
+.confetti-bit {
+  position: fixed;
+  top: -12px;
+  z-index: 80;
+  pointer-events: none;
+  animation: fall linear forwards;
+}

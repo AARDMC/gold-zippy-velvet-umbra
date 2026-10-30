@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AAPHRELIM-IRERC — Ethics Review Workflow (Graphic Demo)</title>
+<style>
+/* ============================== THEME ============================== */
+:root{
+  --bg:#060d16;
+  --panel:rgba(255,255,255,.045);
+  --panel-2:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.09);
+  --line-2:rgba(255,255,255,.16);
+  --text:#e8eef8;
+  --muted:#8ea3ba;
+  --sky:#38bdf8;
+  --emerald:#34d399;
+  --amber:#fbbf24;
+  --violet:#a78bfa;
+  --rose:#fb7185;
+  --navy:#0b2038;
+  --shadow:0 20px 50px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;color:var(--text);font-size:14px;line-height:1.5;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);overflow:hidden;
+}
+/* animated mesh background */
+body::before{
+  content:'';position:fixed;inset:-25%;z-index:-2;
+  background:
+    radial-gradient(circle at 15% 18%, rgba(56,189,248,.20), transparent 42%),
+    radial-gradient(circle at 85% 12%, rgba(167,139,250,.18), transparent 42%),
+    radial-gradient(circle at 72% 88%, rgba(52,211,153,.15), transparent 44%),
+    radial-gradient(circle at 22% 92%, rgba(251,191,36,.11), transparent 42%);
+  animation:drift 26s ease-in-out infinite alternate;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+                   linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(ellipse at 50% 0%, #000 20%, transparent 78%);
+}
+@keyframes drift{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(3%,-2%,0) scale(1.06)}
+  100%{transform:translate3d(-3%,2%,0) scale(1.02)}
+}
+h1,h2,h3,h4{margin:0 0 8px;font-weight:700;letter-spacing:-.015em}
+.hidden{display:none !important}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.spacer{flex:1}
+
+/* ============================== LOGIN ============================== */
+#login{
+  position:relative;min-height:100vh;display:grid;place-items:center;padding:28px;overflow:auto;
+}
+.orb{position:absolute;border-radius:50%;filter:blur(2px);opacity:.55;animation:float 14s ease-in-out infinite}
+.orb.o1{width:230px;height:230px;background:radial-gradient(circle at 30% 30%,#38bdf8,#1e3a8a);top:8%;left:6%}
+.orb.o2{width:160px;height:160px;background:radial-gradient(circle at 30% 30%,#34d399,#065f46);bottom:12%;right:10%;animation-delay:-4s}
+.orb.o3{width:110px;height:110px;background:radial-gradient(circle at 30% 30%,#a78bfa,#4c1d95);top:16%;right:22%;animation-delay:-8s}
+.orb.o4{width:80px;height:80px;background:radial-gradient(circle at 30% 30%,#fbbf24,#92400e);bottom:22%;left:16%;animation-delay:-2s}
+@keyframes float{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-26px) translateX(14px)}}
+
+.login-card{
+  position:relative;z-index:2;width:100%;max-width:1000px;display:grid;grid-template-columns:1.05fr 1fr;
+  border-radius:24px;overflow:hidden;border:1px solid var(--line-2);
+  background:linear-gradient(155deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+  backdrop-filter:blur(22px);box-shadow:0 40px 100px rgba(0,0,0,.6);
+}
+.login-left{padding:44px 40px;position:relative;
+  background:linear-gradient(160deg, rgba(56,189,248,.16), rgba(167,139,250,.10) 55%, transparent)}
+.login-left .tag{display:inline-block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid var(--line-2);border-radius:999px;padding:5px 12px;color:#bfe3ff;margin-bottom:20px}
+.login-left h1{font-size:27px;line-height:1.2;background:linear-gradient(100deg,#fff,#9fd8ff 60%,#7ef0c8);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.login-left p{color:#a9c1d8;font-size:12.8px}
+.login-left ul{margin:20px 0 0;padding:0;list-style:none}
+.login-left li{display:flex;gap:9px;font-size:12.5px;color:#c3d6e8;margin-bottom:9px}
+.login-left li b{color:#7ef0c8;font-weight:700}
+.login-right{padding:36px 34px;background:rgba(6,13,22,.45)}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.role-btn{
+  position:relative;text-align:left;border:1px solid var(--line);border-radius:16px;padding:15px 14px;
+  background:linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  cursor:pointer;transition:.22s cubic-bezier(.2,.7,.3,1);color:inherit;font:inherit;overflow:hidden;
+}
+.role-btn::after{content:'';position:absolute;inset:0;border-radius:16px;opacity:0;transition:.22s;
+  background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(56,189,248,.28), transparent 60%)}
+.role-btn:hover{transform:translateY(-3px);border-color:rgba(56,189,248,.55);
+  box-shadow:0 16px 36px rgba(56,189,248,.20)}
+.role-btn:hover::after{opacity:1}
+.role-btn .ico{font-size:20px;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;
+  background:linear-gradient(140deg, rgba(56,189,248,.28), rgba(167,139,250,.24));border:1px solid var(--line-2)}
+.role-btn .nm{font-weight:700;margin-top:9px;font-size:13.5px}
+.role-btn .ds{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35}
+
+/* ============================== SHELL ============================== */
+#app{display:grid;grid-template-columns:248px 1fr;grid-template-rows:64px 1fr;height:100vh}
+header{
+  grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 20px;z-index:20;
+  background:rgba(8,18,30,.72);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:11px;font-weight:750;letter-spacing:.01em}
+.brand .logo{
+  width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:15px;
+  background:conic-gradient(from 210deg,#38bdf8,#34d399,#a78bfa,#38bdf8);
+  box-shadow:0 0 24px rgba(56,189,248,.5);color:#04121f;
+}
+.brand small{display:block;font-weight:500;color:#7f97ae;font-size:9.8px;letter-spacing:.13em}
+.userbox{display:flex;align-items:center;gap:11px}
+.userbox .avatar{
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;
+  background:linear-gradient(140deg,#38bdf8,#a78bfa);color:#04121f;box-shadow:0 0 18px rgba(56,189,248,.45)}
+.userbox .nm{font-weight:700;font-size:12.5px}
+.userbox .rl{font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;color:#7f97ae;font-weight:700}
+.btn{
+  border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:11px;
+  padding:8px 14px;font:inherit;font-weight:650;font-size:12.5px;cursor:pointer;transition:.16s;
+  display:inline-flex;align-items:center;gap:7px;
+}
+.btn:hover{background:rgba(255,255,255,.11);border-color:var(--line-2);transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(135deg,#1d7fd1,#38bdf8);border-color:transparent;color:#03111e;
+  box-shadow:0 8px 22px rgba(56,189,248,.32)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.go{background:linear-gradient(135deg,#0f9b74,#34d399);border-color:transparent;color:#03231a;
+  box-shadow:0 8px 22px rgba(52,211,153,.30)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 11px;font-size:11.5px;border-radius:9px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+aside{
+  background:rgba(8,18,30,.55);backdrop-filter:blur(14px);border-right:1px solid var(--line);
+  padding:16px 12px;overflow-y:auto;
+}
+.nav-sec{font-size:9.5px;text-transform:uppercase;letter-spacing:.15em;color:#5f7891;font-weight:800;
+  padding:14px 12px 7px}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;cursor:pointer;
+  color:#9fb4c9;font-weight:600;font-size:13px;margin-bottom:3px;border:none;background:none;
+  width:100%;text-align:left;font-family:inherit;transition:.16s;position:relative;
+}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.active{
+  background:linear-gradient(100deg, rgba(56,189,248,.22), rgba(167,139,250,.12));
+  color:#fff;box-shadow:inset 0 0 0 1px rgba(56,189,248,.35);
+}
+.nav-item.active::before{content:'';position:absolute;left:0;top:22%;bottom:22%;width:3px;border-radius:3px;
+  background:linear-gradient(#38bdf8,#a78bfa)}
+.nav-item .ic{width:20px;text-align:center;font-size:14px}
+.nav-item .cnt{margin-left:auto;background:linear-gradient(135deg,#fbbf24,#f97316);color:#231402;
+  border-radius:999px;padding:1px 7px;font-size:10px;font-weight:800}
+main{padding:24px 28px 60px;overflow-y:auto;position:relative}
+
+/* ============================== CARDS ============================== */
+.card{
+  background:linear-gradient(160deg, rgba(255,255,255,.062), rgba(255,255,255,.018));
+  border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(12px);
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.card-pad{padding:20px 22px}
+.card.glow::before{
+  content:'';position:absolute;top:-60%;left:-20%;width:70%;height:200%;
+  background:radial-gradient(circle, rgba(56,189,248,.16), transparent 65%);pointer-events:none;
+}
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:1fr 1fr}
+@media(max-width:1150px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2{grid-template-columns:1fr}}
+@media(max-width:760px){#app{grid-template-columns:1fr}aside{display:none}}
+
+.page-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+.page-head h1{font-size:22px;background:linear-gradient(100deg,#fff,#a9d9ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.page-head p{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+
+/* KPI */
+.kpi{padding:18px 20px;position:relative;overflow:hidden}
+.kpi .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:800}
+.kpi .val{font-size:32px;font-weight:800;letter-spacing:-.03em;margin-top:6px;line-height:1}
+.kpi .sub{font-size:11.5px;color:var(--muted);margin-top:5px}
+.kpi .spark{position:absolute;right:12px;bottom:10px;opacity:.55}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.k-sky::after{background:linear-gradient(90deg,#38bdf8,transparent)}
+.kpi.k-em::after{background:linear-gradient(90deg,#34d399,transparent)}
+.kpi.k-am::after{background:linear-gradient(90deg,#fbbf24,transparent)}
+.kpi.k-rose::after{background:linear-gradient(90deg,#fb7185,transparent)}
+.kpi.k-vio::after{background:linear-gradient(90deg,#a78bfa,transparent)}
+
+/* ============================== FLOW PIPELINE ============================== */
+.flow{display:flex;gap:4px;margin-top:16px}
+.flow-node{flex:1;position:relative;text-align:center;padding:0 3px;min-width:0}
+.flow-node::before{
+  content:'';position:absolute;top:25px;left:-50%;width:100%;height:2px;
+  background:linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.18));
+}
+.flow-node:first-child::before{display:none}
+.flow-dot{
+  width:52px;height:52px;border-radius:16px;margin:0 auto 8px;display:grid;place-items:center;
+  font-weight:800;font-size:16px;position:relative;z-index:2;
+  background:rgba(255,255,255,.05);border:1px solid var(--line);
+  transition:.25s;color:#7f97ae;
+}
+.flow-node.hot .flow-dot{
+  background:linear-gradient(150deg, rgba(56,189,248,.30), rgba(167,139,250,.18));
+  border-color:rgba(56,189,248,.55);color:#fff;box-shadow:0 0 28px rgba(56,189,248,.35);
+  animation:pulseGlow 2.6s ease-in-out infinite;
+}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 18px rgba(56,189,248,.25)}50%{box-shadow:0 0 36px rgba(56,189,248,.55)}}
+.flow-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ============================== TABLES ============================== */
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:#6f889f;
+  font-weight:800;padding:12px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.025)}
+td{padding:13px 14px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top}
+tr.clickable{cursor:pointer;transition:.14s}
+tr.clickable:hover td{background:rgba(56,189,248,.07)}
+.t-title{font-weight:650;color:#fff;line-height:1.35}
+.t-sub{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+/* ============================== CHIPS ============================== */
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;
+  font-size:10.5px;font-weight:800;letter-spacing:.03em;white-space:nowrap;border:1px solid transparent}
+.ch-gray{background:rgba(255,255,255,.08);color:#b6c6d6;border-color:rgba(255,255,255,.12)}
+.ch-sky{background:rgba(56,189,248,.16);color:#8ed8ff;border-color:rgba(56,189,248,.35)}
+.ch-indigo{background:rgba(129,140,248,.16);color:#b4bcff;border-color:rgba(129,140,248,.35)}
+.ch-amber{background:rgba(251,191,36,.15);color:#ffd97a;border-color:rgba(251,191,36,.35)}
+.ch-teal{background:rgba(45,212,191,.15);color:#7ff0dd;border-color:rgba(45,212,191,.35)}
+.ch-violet{background:rgba(167,139,250,.16);color:#cbb9ff;border-color:rgba(167,139,250,.35)}
+.ch-green{background:rgba(52,211,153,.16);color:#8bf0c6;border-color:rgba(52,211,153,.35)}
+.ch-rose{background:rgba(251,113,133,.16);color:#ffb0bc;border-color:rgba(251,113,133,.35)}
+
+/* ============================== DETAIL ============================== */
+.stagebar{display:flex;gap:6px;margin:18px 0 26px}
+.sb{flex:1;text-align:center;font-size:9px;font-weight:800;color:#5f7891;letter-spacing:.07em;
+  text-transform:uppercase;min-width:0}
+.sb .bar{height:7px;border-radius:5px;background:rgba(255,255,255,.07);margin-bottom:7px;transition:.4s}
+.sb.done .bar{background:linear-gradient(90deg,#0f9b74,#34d399);box-shadow:0 0 14px rgba(52,211,153,.5)}
+.sb.current .bar{background:linear-gradient(90deg,#1d7fd1,#38bdf8);box-shadow:0 0 16px rgba(56,189,248,.6);
+  animation:pulseGlow 2.4s ease-in-out infinite}
+.sb.current{color:#8ed8ff}
+.sb.done{color:#7ff0dd}
+
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 24px}
+@media(max-width:900px){.info-grid{grid-template-columns:1fr 1fr}}
+.info-grid .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:800}
+.info-grid .v{font-weight:650;margin-top:3px;color:#fff}
+
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{position:relative;padding:0 0 18px 26px;border-left:2px solid rgba(255,255,255,.09);margin-left:7px}
+.timeline li:last-child{border-left-color:transparent;padding-bottom:0}
+.timeline li::before{content:'';position:absolute;left:-7px;top:4px;width:11px;height:11px;border-radius:50%;
+  background:#07131f;border:2px solid #38bdf8;box-shadow:0 0 12px rgba(56,189,248,.75)}
+.timeline .t-date{font-size:10.5px;color:var(--muted);font-weight:750;letter-spacing:.03em}
+.timeline .t-act{font-weight:650;font-size:12.8px}
+.timeline .t-note{font-size:11.5px;color:var(--muted)}
+
+/* ============================== FILTERS ============================== */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.filter{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:999px;
+  padding:7px 14px;font:inherit;font-size:11.5px;font-weight:700;color:#9fb4c9;cursor:pointer;transition:.16s}
+.filter:hover{background:rgba(255,255,255,.09)}
+.filter.active{background:linear-gradient(135deg,#1d7fd1,#38bdf8);border-color:transparent;color:#03111e;
+  box-shadow:0 8px 20px rgba(56,189,248,.3)}
+
+/* ============================== NOTES ============================== */
+.note{border-radius:13px;padding:13px 16px;font-size:12.5px;margin:12px 0;border:1px solid;line-height:1.5}
+.note.info{background:rgba(56,189,248,.09);color:#a9dcff;border-color:rgba(56,189,248,.28)}
+.note.ok{background:rgba(52,211,153,.09);color:#8bf0c6;border-color:rgba(52,211,153,.28)}
+.note.warn{background:rgba(251,191,36,.09);color:#ffd97a;border-color:rgba(251,191,36,.28)}
+.empty{padding:44px 20px;text-align:center;color:var(--muted)}
+.empty .big{font-size:34px;opacity:.3;margin-bottom:10px}
+
+/* ============================== FORMS ============================== */
+label.fl{display:block;font-size:10px;font-weight:800;color:#8fa8c0;margin:14px 0 6px;
+  text-transform:uppercase;letter-spacing:.11em}
+input[type=text],input[type=date],select,textarea{
+  width:100%;border:1px solid var(--line-2);border-radius:11px;padding:10px 12px;font:inherit;
+  background:rgba(255,255,255,.055);color:var(--text);transition:.15s;
+}
+select option{background:#0b1622;color:#e8eef8}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#38bdf8;
+  box-shadow:0 0 0 3px rgba(56,189,248,.18);background:rgba(255,255,255,.08)}
+textarea{min-height:84px;resize:vertical}
+.crit{border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:9px;
+  background:rgba(255,255,255,.03);transition:.15s}
+.crit:hover{border-color:rgba(56,189,248,.35);background:rgba(56,189,248,.05)}
+.crit-label{font-weight:650;font-size:12.5px;margin-bottom:8px;color:#dbe9f7}
+.crit-opts{display:flex;gap:8px;flex-wrap:wrap}
+.crit-opts label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11.5px;
+  border:1px solid var(--line);border-radius:999px;padding:5px 12px;transition:.15s;color:#9fb4c9}
+.crit-opts input{accent-color:#38bdf8}
+.crit-opts label:has(input:checked){background:rgba(56,189,248,.18);border-color:rgba(56,189,248,.5);color:#bfe8ff}
+
+/* ============================== MODAL / TOAST ============================== */
+.modal-backdrop{position:fixed;inset:0;background:rgba(2,8,16,.72);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;
+  animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:linear-gradient(165deg,#0d1c2c,#081420);border:1px solid var(--line-2);border-radius:22px;
+  width:100%;max-width:760px;max-height:88vh;overflow:auto;box-shadow:0 40px 100px rgba(0,0,0,.7);
+  animation:popIn .22s cubic-bezier(.2,.8,.3,1.1)}
+@keyframes popIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:rgba(13,28,44,.96);backdrop-filter:blur(12px);z-index:2}
+.modal-head h3{font-size:16px;margin:0}
+.modal-head button{margin-left:auto;border:1px solid var(--line);background:rgba(255,255,255,.06);
+  width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:14px;color:#9fb4c9}
+.modal-head button:hover{background:rgba(251,113,133,.2);color:#fff}
+.modal-body{padding:20px 22px 6px}
+.modal-foot{padding:16px 22px 22px;display:flex;gap:10px;justify-content:flex-end;
+  position:sticky;bottom:0;background:linear-gradient(to top,#081420 65%,transparent)}
+#toast{position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:10px;z-index:200}
+.toast{background:linear-gradient(135deg,#123f66,#0d2b47);color:#fff;padding:12px 18px;border-radius:13px;
+  font-weight:650;font-size:12.5px;box-shadow:0 16px 40px rgba(0,0,0,.5);border:1px solid rgba(56,189,248,.35);
+  animation:slideIn .26s cubic-bezier(.2,.8,.3,1.1)}
+.toast.ok{background:linear-gradient(135deg,#0f9b74,#0a6b52);border-color:rgba(52,211,153,.5)}
+.toast.warn{background:linear-gradient(135deg,#b7791f,#8a5a11);border-color:rgba(251,191,36,.5)}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+
+/* ============================== CONFETTI ============================== */
+.confetti{position:fixed;width:9px;height:14px;z-index:300;pointer-events:none;border-radius:2px;
+  animation:fall linear forwards}
+@keyframes fall{
+  0%{transform:translateY(-10vh) rotate(0);opacity:1}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+
+/* ============================== MISC ============================== */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.bar-row .bl{width:62px;font-size:11px;color:var(--muted);font-weight:700}
+.bar-track{flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .bv{width:26px;text-align:right;font-size:11.5px;font-weight:800;color:#dbe9f7}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+.legend span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:650}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.sop-ref{font-size:10.5px;color:#6f889f;margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- ============================ LOGIN ============================ -->
+<div id="login">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="orb o3"></div><div class="orb o4"></div>
+
+  <div class="login-card">
+    <div class="login-left">
+      <span class="tag">Demo · Fictitious Data</span>
+      <h1>AAPHRELIM-IRERC<br>Ethics Review Workflow</h1>
+      <p>Addis Ababa Health Bureau — Public Health Research, Emergency &amp; Laboratory Institutional Research Ethics Review Committee</p>
+      <ul>
+        <li><b>▸</b> Submission → completeness → reviewer assignment</li>
+        <li><b>▸</b> Assessment → committee agenda → decision</li>
+        <li><b>▸</b> Action letter → continuing review → archive</li>
+        <li><b>▸</b> Role-based duties per the consolidated SOP package</li>
+      </ul>
+      <p style="margin-top:26px;font-size:10.5px;color:#7f9db8;line-height:1.6">
+        Editorial working draft · Not evidence of approval by any authority.<br>
+        All names, protocols and events on this screen are fictitious.
+      </p>
+    </div>
+    <div class="login-right">
+      <h2 style="font-size:18px">Select a role to explore</h2>
+      <p class="muted small">Each role sees exactly the actions the SOP assigns to it.</p>
+      <div class="role-grid" id="roleGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ APP ============================ -->
+<div id="app" class="hidden">
+  <header>
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>AAPHRELIM-IRERC <small>ETHICS REVIEW WORKFLOW</small></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="userbox">
+      <div style="text-align:right">
+        <div class="nm" id="hdrName">—</div>
+        <div class="rl" id="hdrRole">—</div>
+      </div>
+      <div class="avatar" id="hdrAvatar">?</div>
+    </div>
+    <button class="btn sm ghost" data-action="reset-demo">⟳ Reset</button>
+    <button class="btn sm ghost" data-action="logout">⏻ Switch role</button>
+  </header>
+
+  <aside id="nav"></aside>
+  <main id="view"></main>
+</div>
+
+<!-- ============================ MODAL / TOAST ============================ -->
+<div id="modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">—</h3>
+      <button data-action="close-modal">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* =====================================================================
+   AAPHRELIM-IRERC WORKFLOW DEMO — graphic edition
+   All data fictitious. Single file, no dependencies.
+   ===================================================================== */
+const DEMO_TODAY = '2026-03-25';
+
+/* ---------------- REFERENCE DATA ---------------- */
+const REVIEWER_POOL = [
+  'Dr. Yonas Haile','Dr. Meseret Assefa','Dr. Solomon Girma',
+  'Dr. Rahel Tesfaye','Dr. Getachew Alemu','Dr. Mulugeta Bekele'
+];
+
+const CRITERIA = [
+  'Risks to participants are minimized',
+  'Risks are reasonable in relation to anticipated benefits',
+  'Selection of participants is equitable',
+  'Informed consent is adequate, easy to understand and properly documented',
+  'Adequate provision for monitoring collected data to ensure participant safety',
+  'Adequate provisions to protect privacy and maintain confidentiality',
+  'Appropriate safeguards are included to protect vulnerable participants'
+];
+
+const STATUS = {
+  submitted:       { label:'Submitted',               cls:'ch-gray'   },
+  verified:        { label:'Completeness Verified',   cls:'ch-sky'    },
+  assigned:        { label:'Reviewers Assigned',      cls:'ch-indigo' },
+  reviewing:       { label:'Under Review',            cls:'ch-amber'  },
+  review_complete: { label:'Reviews Complete',        cls:'ch-teal'   },
+  agenda:          { label:'On Committee Agenda',     cls:'ch-violet' },
+  decided:         { label:'Decision Recorded',       cls:'ch-sky'    },
+  closed:          { label:'Closed / Archived',       cls:'ch-green'  },
+  returned:        { label:'Returned for Correction', cls:'ch-rose'   }
+};
+
+const STAGES = ['submitted','verified','assigned','reviewing','review_complete','agenda','decided','closed'];
+const STAGE_LABEL = {
+  submitted:'Submitted', verified:'Verified', assigned:'Assigned', reviewing:'Reviewing',
+  review_complete:'Reviewed', agenda:'Agenda', decided:'Decided', closed:'Closed'
+};
+
+const ROLES = {
+  investigator:{ name:'Dr. Selam Bekele',     title:'Investigator / PI', initials:'SB', icon:'🧪',
+                 desc:'Submits protocols, amendments, progress & final reports' },
+  secretariat: { name:'Ms. Meron Tadesse',    title:'Secretariat',       initials:'MT', icon:'🗂',
+                 desc:'Receives, verifies, assigns, schedules, communicates, archives' },
+  reviewer:    { name:'Dr. Yonas Haile',      title:'Reviewer',          initials:'YH', icon:'✎',
+                 desc:'Reviews assigned protocols and completes assessment forms' },
+  chairperson: { name:'Prof. Almaz Wondimu',  title:'Chairperson',       initials:'AW', icon:'⚖',
+                 desc:'Chairs meetings, signs decisions, approves expedited items' },
+  system:      { name:'System Administrator', title:'Digital System',    initials:'SA', icon:'⚙',
+                 desc:'Audit trail, access control, document control (support only)' }
+};
+
+/* ---------------- HELPERS ---------------- */
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const h = (date, actor, action, note='') => ({ date, actor, action, note });
+const today = () => DEMO_TODAY;
+
+function toast(msg, kind='') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3400);
+}
+
+/* ---------------- SVG CHART HELPERS ---------------- */
+function donut(segments, size=140, thick=16) {
+  const total = segments.reduce((a,b)=>a+b.value,0) || 1;
+  const r = (size - thick)/2, c = 2*Math.PI*r;
+  let off = 0;
+  const arcs = segments.filter(s=>s.value>0).map(s=>{
+    const len = (s.value/total)*c;
+    const el = `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${s.color}"
+      stroke-width="${thick}" stroke-linecap="round"
+      stroke-dasharray="${len} ${c-len}" stroke-dashoffset="${-off}"
+      transform="rotate(-90 ${size/2} ${size/2})">
+      <animate attributeName="stroke-dasharray" from="0 ${c}" to="${len} ${c-len}" dur="0.9s"
+               fill="freeze" calcMode="spline" keySplines="0.2 0.8 0.3 1"/>
+      </circle>`;
+    off += len;
+    return el;
+  }).join('');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${thick}"/>
+    ${arcs}
+  </svg>`;
+}
+
+function gauge(pct, size=96, color='#38bdf8') {
+  const th=11, r=(size-th)/2, c=2*Math.PI*r, len=c*pct/100;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="${th}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${th}"
+      stroke-linecap="round" stroke-dasharray="${len} ${c-len}"
+      transform="rotate(-90 ${size/2} ${size/2})" style="filter:drop-shadow(0 0 8px ${color})">
+      <animate attributeName="stroke-dasharray" from="0 ${c}" to="${len} ${c-len}" dur="1s" fill="freeze"/>
+    </circle>
+    <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle"
+      fill="#fff" font-size="${size*0.22}" font-weight="800">${pct}%</text>
+  </svg>`;
+}
+
+function sparkline(vals, w=86, hgt=28, color='#38bdf8') {
+  const max = Math.max(...vals), min = Math.min(...vals);
+  const rng = (max-min)||1;
+  const pts = vals.map((v,i)=>{
+    const x = (i/(vals.length-1))*w;
+    const y = hgt - ((v-min)/rng)*(hgt-4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg width="${w}" height="${hgt}" viewBox="0 0 ${w} ${hgt}">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round"
+      style="filter:drop-shadow(0 0 6px ${color}88)"/>
+  </svg>`;
+}
+
+/* ---------------- FICTITIOUS DATA ---------------- */
+let protocols = [
+  {
+    id:'AAPHRELIM-IRERC 001/01-26',
+    title:'Efficacy and Safety of Artemether–Lumefantrine for Uncomplicated Falciparum Malaria in Children Under Five',
+    type:'Clinical Trial — Phase III', pi:'Dr. Selam Bekele',
+    institution:'Addis Ababa University, College of Health Sciences',
+    sponsor:'National Malaria Control Program',
+    submitted:'2026-01-08', status:'closed',
+    decision:'Approved',
+    decisionNote:'Approved with no modifications. Annual continuing review required.',
+    reviewers:['Dr. Yonas Haile','Dr. Meseret Assefa'],
+    reviews:[
+      { reviewer:'Dr. Yonas Haile', date:'2026-01-20', recommendation:'Approved',
+        comments:'Risk/benefit acceptable; consent documents adequate in Amharic and Oromiffa.' },
+      { reviewer:'Dr. Meseret Assefa', date:'2026-01-21', recommendation:'Approved',
+        comments:'No ethical concerns. Data monitoring plan adequate.' }
+    ],
+    history:[
+      h('2026-01-08','Dr. Selam Bekele','Protocol submitted','Initial review package, 4 hard copies + soft copy'),
+      h('2026-01-09','Ms. Meron Tadesse (Secretariat)','Completeness verified','Checklist AF 01-007 complete'),
+      h('2026-01-10','Ms. Meron Tadesse (Secretariat)','Reviewers assigned','2 primary reviewers'),
+      h('2026-01-21','Reviewers','Assessment forms completed','Both recommended approval'),
+      h('2026-01-28','Committee','Reviewed at convened meeting','Approved'),
+      h('2026-01-30','Ms. Meron Tadesse (Secretariat)','Action letter issued','Protocol number assigned')
+    ]
+  },
+  {
+    id:'AAPHRELIM-IRERC 002/02-26',
+    title:'Prevalence and Risk Factors of Hypertension Among Adults in Addis Ababa: A Community-Based Survey',
+    type:'Observational — Community Survey', pi:'Dr. Abebe Tesfaye',
+    institution:"St. Paul's Hospital Millennium Medical College",
+    sponsor:'Addis Ababa Health Bureau',
+    submitted:'2026-02-12', status:'agenda', decision:null, decisionNote:'',
+    reviewers:['Dr. Solomon Girma','Dr. Rahel Tesfaye'],
+    reviews:[
+      { reviewer:'Dr. Solomon Girma', date:'2026-02-25', recommendation:'Approved with minor modification',
+        comments:'Add referral pathway for participants with elevated blood pressure.' },
+      { reviewer:'Dr. Rahel Tesfaye', date:'2026-02-27', recommendation:'Approved with minor modification',
+        comments:'Clarify consent procedure for non-literate participants.' }
+    ],
+    history:[
+      h('2026-02-12','Dr. Abebe Tesfaye','Protocol submitted'),
+      h('2026-02-13','Ms. Meron Tadesse (Secretariat)','Completeness verified'),
+      h('2026-02-14','Ms. Meron Tadesse (Secretariat)','Reviewers assigned'),
+      h('2026-02-27','Reviewers','Assessment forms completed'),
+      h('2026-03-02','Ms. Meron Tadesse (Secretariat)','Placed on committee agenda','Meeting 04/2026')
+    ]
+  },
+  {
+    id:'AAPHRELIM-IRERC 003/02-26',
+    title:'A Phase II Trial of a Novel Rotavirus Vaccine Candidate in Infants',
+    type:'Clinical Trial — Phase II', pi:'Dr. Hanna Girma',
+    institution:'Armauer Hansen Research Institute',
+    sponsor:'International Vaccine Institute',
+    submitted:'2026-02-20', status:'reviewing', decision:null, decisionNote:'',
+    reviewers:['Dr. Yonas Haile','Dr. Getachew Alemu'],
+    reviews:[
+      { reviewer:'Dr. Yonas Haile', date:'2026-03-10', recommendation:'Approved with major modification',
+        comments:'Safety monitoring plan must be strengthened for infants under 6 weeks.' }
+    ],
+    history:[
+      h('2026-02-20','Dr. Hanna Girma','Protocol submitted'),
+      h('2026-02-21','Ms. Meron Tadesse (Secretariat)','Completeness verified'),
+      h('2026-02-23','Ms. Meron Tadesse (Secretariat)','Reviewers assigned'),
+      h('2026-03-10','Dr. Yonas Haile','Assessment form submitted','Approved with major modification'),
+      h('2026-03-02','Investigator','SAE-002 reported','Febrile seizure in infant'),
+      h('2026-03-11','Investigator','SAE-003 reported','Suspected intussusception')
+    ]
+  },
+  {
+    id:'AAPHRELIM-IRERC 004/03-26',
+    title:'Whole-Genome Sequencing of Drug-Resistant Mycobacterium tuberculosis Isolates',
+    type:'Genetic Study — Stored Specimens', pi:'Dr. Dawit Mekonnen',
+    institution:'Black Lion Hospital, Department of Internal Medicine',
+    sponsor:'Ethiopian Public Health Institute',
+    submitted:'2026-03-03', status:'assigned', decision:null, decisionNote:'',
+    reviewers:['Dr. Meseret Assefa','Dr. Mulugeta Bekele'], reviews:[],
+    history:[
+      h('2026-03-03','Dr. Dawit Mekonnen','Protocol submitted','Includes separate biobank consent'),
+      h('2026-03-04','Ms. Meron Tadesse (Secretariat)','Completeness verified'),
+      h('2026-03-05','Ms. Meron Tadesse (Secretariat)','Reviewers assigned')
+    ]
+  },
+  {
+    id:'AAPHRELIM-IRERC 005/03-26',
+    title:'Evaluation of a Portable ECG Monitor for Community Cardiovascular Screening (Non-Significant Risk Device)',
+    type:'Medical Device Study — NSR', pi:'Dr. Tigist Alemu',
+    institution:'Addis Ababa Health Bureau, Non-Communicable Disease Unit',
+    sponsor:'MedTech East Africa (fictitious)',
+    submitted:'2026-03-15', status:'verified', decision:null, decisionNote:'',
+    reviewers:[], reviews:[],
+    history:[
+      h('2026-03-15','Dr. Tigist Alemu','Protocol submitted','Device description & risk assessment attached'),
+      h('2026-03-16','Ms. Meron Tadesse (Secretariat)','Completeness verified','NSR determination pending reviewer confirmation')
+    ]
+  },
+  {
+    id:'AAPHRELIM-IRERC 006/03-26',
+    title:'Impact of a Community Nutrition Intervention on Child Stunting in Peri-Urban Districts',
+    type:'Community Intervention', pi:'Dr. Selam Bekele',
+    institution:'Addis Ababa University, School of Public Health',
+    sponsor:'UNICEF Ethiopia (fictitious)',
+    submitted:'2026-03-22', status:'submitted', decision:null, decisionNote:'',
+    reviewers:[], reviews:[],
+    history:[ h('2026-03-22','Dr. Selam Bekele','Protocol submitted','Awaiting secretariat verification') ]
+  },
+  {
+    id:'AAPHRELIM-IRERC 007/02-26',
+    title:'Post-Marketing Surveillance of Antiretroviral Therapy Adherence in Addis Ababa Health Centers',
+    type:'Observational — Cohort', pi:'Dr. Abebe Tesfaye',
+    institution:"St. Paul's Hospital Millennium Medical College",
+    sponsor:'Ministry of Health',
+    submitted:'2026-02-01', status:'decided',
+    decision:'Approved with minor modification',
+    decisionNote:'Revise consent form to include contact details of the IRERC secretariat.',
+    reviewers:['Dr. Rahel Tesfaye','Dr. Solomon Girma'],
+    reviews:[
+      { reviewer:'Dr. Rahel Tesfaye', date:'2026-02-18', recommendation:'Approved with minor modification',
+        comments:'Consent form missing IRERC contact information.' },
+      { reviewer:'Dr. Solomon Girma', date:'2026-02-19', recommendation:'Approved with minor modification',
+        comments:'Agree with primary reviewer.' }
+    ],
+    history:[
+      h('2026-02-01','Dr. Abebe Tesfaye','Protocol submitted'),
+      h('2026-02-02','Ms. Meron Tadesse (Secretariat)','Completeness verified'),
+      h('2026-02-04','Ms. Meron Tadesse (Secretariat)','Reviewers assigned'),
+      h('2026-02-19','Reviewers','Assessment forms completed'),
+      h('2026-03-05','Committee','Reviewed at convened meeting','Approved with minor modification')
+    ]
+  }
+];
+
+let safetyReports = [
+  { id:'SAE-001', protocol:'AAPHRELIM-IRERC 001/01-26',
+    event:'Severe anaemia requiring blood transfusion', date:'2026-02-14',
+    relatedness:'Possibly related', seriousness:'Hospitalization', status:'Reviewed — No further action' },
+  { id:'SAE-002', protocol:'AAPHRELIM-IRERC 003/02-26',
+    event:'Febrile seizure in a 6-week-old infant', date:'2026-03-02',
+    relatedness:'Probably related', seriousness:'Life-threatening', status:'Pending review' },
+  { id:'SAE-003', protocol:'AAPHRELIM-IRERC 003/02-26',
+    event:'Suspected intussusception', date:'2026-03-11',
+    relatedness:'Unknown', seriousness:'Hospitalization', status:'Pending review' },
+  { id:'AE-004', protocol:'AAPHRELIM-IRERC 002/02-26',
+    event:'Hypertensive urgency during screening', date:'2026-03-05',
+    relatedness:'Not related', seriousness:'Non-serious', status:'Reviewed — No further action' }
+];
+
+const MONTHS = ['Oct','Nov','Dec','Jan','Feb','Mar'];
+const MONTHLY = [2,1,3,4,5,6];
+
+/* ---------------- STATE ---------------- */
+const state = { role:null, view:'dashboard', selected:null, filter:'all' };
+const me = () => ROLES[state.role].name;
+
+/* ---------------- NAVIGATION ---------------- */
+const NAV = [
+  { key:'dashboard',  label:'Dashboard',      icon:'▦', roles:['investigator','secretariat','reviewer','chairperson','system'] },
+  { key:'submissions',label:'Submissions',    icon:'▤', roles:['investigator','secretariat','reviewer','chairperson','system'] },
+  { key:'review',     label:'My Reviews',     icon:'✎', roles:['reviewer'] },
+  { key:'committee',  label:'Committee',      icon:'⚖', roles:['chairperson','secretariat'] },
+  { key:'safety',     label:'Safety Reports', icon:'⚠', roles:['investigator','secretariat','reviewer','chairperson','system'] },
+  { key:'archive',    label:'Archive',        icon:'🗄', roles:['secretariat','chairperson','system'] },
+  { key:'system',     label:'System & Audit', icon:'⚙', roles:['system','secretariat'] },
+  { key:'roles',      label:'Roles & Duties', icon:'◉', roles:['investigator','secretariat','reviewer','chairperson','system'] }
+];
+
+function navCounts() {
+  const myAction = protocols.filter(isAwaitingMe).length;
+  const myReviews = protocols.filter(p =>
+    p.reviewers.includes(me()) && !p.reviews.some(r => r.reviewer === me()) &&
+    ['assigned','reviewing'].includes(p.status)).length;
+  const pendingSafety = safetyReports.filter(s => s.status === 'Pending review').length;
+  return { dashboard:myAction||null, submissions:myAction||null, review:myReviews||null, safety:pendingSafety||null };
+}
+
+function buildNav() {
+  const c = navCounts();
+  document.getElementById('nav').innerHTML = NAV
+    .filter(n => n.roles.includes(state.role))
+    .map(n => `<button class="nav-item ${state.view===n.key?'active':''}" data-action="nav" data-view="${n.key}">
+      <span class="ic">${n.icon}</span> ${n.label}
+      ${c[n.key]?`<span class="cnt">${c[n.key]}</span>`:''}
+    </button>`).join('');
+}
+
+/* ---------------- WORKFLOW LOGIC ---------------- */
+function isAwaitingMe(p) {
+  const r = state.role;
+  if (r === 'secretariat' && ['submitted','verified','review_complete','decided'].includes(p.status)) return true;
+  if (r === 'reviewer' && p.reviewers.includes(me()) && !p.reviews.some(x => x.reviewer === me())
+      && ['assigned','reviewing'].includes(p.status)) return true;
+  if (r === 'chairperson' && ['review_complete','agenda'].includes(p.status)) return true;
+  return false;
+}
+function visibleProtocols() {
+  return state.role === 'investigator' ? protocols.filter(p => p.pi === me()) : protocols;
+}
+const stageIndex = s => Math.max(0, STAGES.indexOf(s));
+function addHistory(p, actor, action, note='') { p.history.push(h(today(), actor, action, note)); }
+
+/* ---------------- RENDER ---------------- */
+function render() {
+  document.getElementById('hdrName').textContent = ROLES[state.role].name;
+  document.getElementById('hdrRole').textContent = ROLES[state.role].title;
+  document.getElementById('hdrAvatar').textContent = ROLES[state.role].initials;
+  buildNav();
+  document.getElementById('view').innerHTML = (VIEWS[state.view] || VIEWS.dashboard)();
+  document.getElementById('view').scrollTop = 0;
+  animateCounters();
+  animateBars();
+}
+
+function animateCounters() {
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseFloat(el.dataset.count);
+    const dur = 900; const t0 = performance.now();
+    const isFloat = String(target).includes('.');
+    function step(t) {
+      const k = Math.min(1, (t - t0)/dur);
+      const e = 1 - Math.pow(1-k, 3);
+      const v = target * e;
+      el.textContent = isFloat ? v.toFixed(1) : Math.round(v);
+      if (k < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+function animateBars() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.bar-fill[data-w]').forEach(b => { b.style.width = b.dataset.w + '%'; });
+  });
+}
+
+/* =====================================================================
+   VIEWS
+   ===================================================================== */
+const VIEWS = {};
+
+/* ---------------------------- DASHBOARD ---------------------------- */
+VIEWS.dashboard = () => {
+  const list = visibleProtocols();
+  const pending = list.filter(isAwaitingMe).length;
+  const approved = list.filter(p => p.decision && p.decision.startsWith('Approved')).length;
+  const openSafety = safetyReports.filter(s => s.status === 'Pending review').length;
+
+  const counts = {}; STAGES.forEach(s => counts[s] = 0);
+  list.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
+
+  const palette = ['#38bdf8','#34d399','#fbbf24','#a78bfa','#fb7185','#2dd4bf','#818cf8','#f97316'];
+  const donutSegs = STAGES.map((s,i)=>({ value:counts[s], color:palette[i%palette.length] }))
+    .filter(s=>s.value>0);
+
+  const activity = list.flatMap(p => p.history.map(x => ({ ...x, pid:p.id })))
+    .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
+
+  const quick = quickActions();
+  const maxM = Math.max(...MONTHLY);
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Dashboard</h1>
+        <p>Welcome, <b>${esc(ROLES[state.role].name)}</b> · ${esc(ROLES[state.role].title)} — demo date ${DEMO_TODAY}</p>
+      </div>
+    </div>
+
+    <div class="grid g4" style="margin-bottom:18px">
+      <div class="card kpi k-sky">
+        <div class="lbl">Total protocols</div>
+        <div class="val" data-count="${list.length}">0</div>
+        <div class="sub">${state.role==='investigator'?'Submitted by you':'In the committee file'}</div>
+        <div class="spark">${sparkline(MONTHLY,86,28,'#38bdf8')}</div>
+      </div>
+      <div class="card kpi k-am">
+        <div class="lbl">Awaiting your action</div>
+        <div class="val" data-count="${pending}">0</div>
+        <div class="sub">Based on your role</div>
+        <div class="spark">${sparkline([1,0,2,1,3,pending],86,28,'#fbbf24')}</div>
+      </div>
+      <div class="card kpi k-em">
+        <div class="lbl">Approved</div>
+        <div class="val" data-count="${approved}">0</div>
+        <div class="sub">Incl. approved with minor modification</div>
+        <div class="spark">${sparkline([0,1,1,2,2,approved],86,28,'#34d399')}</div>
+      </div>
+      <div class="card kpi k-rose">
+        <div class="lbl">Open safety reports</div>
+        <div class="val" data-count="${openSafety}">0</div>
+        <div class="sub">AE / SAE / unanticipated events</div>
+        <div class="spark">${sparkline([2,1,3,2,1,openSafety],86,28,'#fb7185')}</div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:18px;align-items:start">
+      <div class="card card-pad glow">
+        <div style="display:flex;align-items:center;gap:10px">
+          <h3 style="margin:0">Workflow pipeline</h3>
+          <span class="sop-ref">SOP 3.1 → 3.3 → 3.4 → 8.1 → 8.3</span>
+        </div>
+        <div class="flow">
+          ${STAGES.map(s => `
+            <div class="flow-node ${counts[s]?'hot':''}">
+              <div class="flow-dot">${counts[s]}</div>
+              <div class="flow-lbl">${STAGE_LABEL[s]}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <h3>Status distribution</h3>
+        <div style="display:flex;align-items:center;gap:18px;margin-top:8px;flex-wrap:wrap">
+          <div>${donut(donutSegs,138,16)}</div>
+          <div style="flex:1;min-width:150px">
+            ${donutSegs.map((s,i)=>`<div class="legend">
+              <span><i style="background:${s.color}"></i>${STAGE_LABEL[STAGES[i]]} — ${s.value}</span>
+            </div>`).join('') || '<span class="muted small">No data</span>'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="align-items:start">
+      <div class="card card-pad">
+        <h3>Quick actions</h3>
+        <p class="small muted" style="margin-top:-2px">What your role can do right now.</p>
+        ${quick.length ? quick.map(q=>`
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+            <div style="width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+                        background:linear-gradient(140deg,rgba(56,189,248,.25),rgba(167,139,250,.2));font-size:15px">▶</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:650;font-size:12.8px">${esc(q.label)}</div>
+              <div class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(q.hint)}</div>
+            </div>
+            <button class="btn sm primary" data-action="${q.action}" data-id="${esc(q.id)}">Open</button>
+          </div>`).join('') : `<div class="empty"><div class="big">✓</div>Nothing awaiting you.</div>`}
+      </div>
+
+      <div class="card card-pad">
+        <h3>Monthly submissions</h3>
+        <div style="margin-top:14px">
+          ${MONTHS.map((m,i)=>`
+            <div class="bar-row">
+              <div class="bl">${m}</div>
+              <div class="bar-track"><div class="bar-fill" data-w="${(MONTHLY[i]/maxM)*100}"
+                 style="background:linear-gradient(90deg,#1d7fd1,#38bdf8);box-shadow:0 0 12px rgba(56,189,248,.55)"></div></div>
+              <div class="bv">${MONTHLY[i]}</div>
+            </div>`).join('')}
+        </div>
+
+        <h3 style="margin-top:22px">Recent activity</h3>
+        <ul class="timeline" style="margin-top:12px">
+          ${activity.map(a=>`<li>
+            <div class="t-date">${a.date} · <span class="mono">${esc(a.pid)}</span></div>
+            <div class="t-act">${esc(a.action)}</div>
+            <div class="t-note">${esc(a.actor)}${a.note?' — '+esc(a.note):''}</div>
+          </li>`).join('') || '<li class="muted">No activity yet.</li>'}
+        </ul>
+      </div>
+    </div>
+  `;
+};
+
+function quickActions() {
+  const out = [];
+  visibleProtocols().forEach(p => {
+    if (state.role === 'secretariat' && p.status === 'submitted')
+      out.push({ label:'Verify completeness — '+p.id, hint:p.title, action:'open', id:p.id });
+    else if (state.role === 'secretariat' && p.status === 'verified')
+      out.push({ label:'Assign reviewers — '+p.id, hint:p.title, action:'open', id:p.id });
+    else if (state.role === 'secretariat' && p.status === 'review_complete')
+      out.push({ label:'Place on agenda — '+p.id, hint:p.title, action:'open', id:p.id });
+    else if (state.role === 'secretariat' && p.status === 'decided')
+      out.push({ label:'Send action letter — '+p.id, hint:p.title, action:'open', id:p.id });
+    else if (state.role === 'chairperson' && ['review_complete','agenda'].includes(p.status))
+      out.push({ label:'Record committee decision — '+p.id, hint:p.title, action:'open', id:p.id });
+    else if (state.role === 'reviewer' && isAwaitingMe(p))
+      out.push({ label:'Complete assessment — '+p.id, hint:p.title, action:'open', id:p.id });
+  });
+  return out.slice(0,6);
+}
+
+/* ---------------------------- SUBMISSIONS ---------------------------- */
+VIEWS.submissions = () => {
+  const list = visibleProtocols();
+  const filtered = state.filter === 'all' ? list : list.filter(p => p.status === state.filter);
+  const chips = ['all', ...STAGES].map(s=>{
+    const n = s==='all' ? list.length : list.filter(p=>p.status===s).length;
+    return `<button class="filter ${state.filter===s?'active':''}" data-action="filter" data-f="${s}">
+      ${s==='all'?'All':STAGE_LABEL[s]} <span style="opacity:.65">(${n})</span></button>`;
+  }).join('');
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Protocol Submissions</h1>
+        <p>SOP 3.1 Management of Protocol Submission · SOP 3.2 Assess Protocol</p>
+      </div>
+      <div class="spacer"></div>
+      ${state.role==='investigator'?`<button class="btn primary" data-action="new-submission">＋ New submission</button>`:''}
+    </div>
+
+    <div class="filters">${chips}</div>
+
+    <div class="card" style="overflow:hidden">
+      <table>
+        <thead><tr>
+          <th style="width:176px">Protocol No.</th>
+          <th>Title / Investigator</th>
+          <th style="width:158px">Type</th>
+          <th style="width:180px">Status</th>
+          <th style="width:104px">Submitted</th>
+        </tr></thead>
+        <tbody>
+          ${filtered.map(p=>`
+            <tr class="clickable" data-action="open" data-id="${esc(p.id)}">
+              <td><span class="mono" style="color:#8ed8ff">${esc(p.id)}</span></td>
+              <td><div class="t-title">${esc(p.title)}</div>
+                  <div class="t-sub">${esc(p.pi)} · ${esc(p.institution)}</div></td>
+              <td class="small">${esc(p.type)}</td>
+              <td>
+                <span class="chip ${STATUS[p.status].cls}">${STATUS[p.status].label}</span>
+                ${isAwaitingMe(p)?'<div class="small" style="color:#fbbf24;font-weight:800;margin-top:5px">● Awaiting you</div>':''}
+              </td>
+              <td class="small">${esc(p.submitted)}</td>
+            </tr>`).join('') ||
+            `<tr><td colspan="5"><div class="empty"><div class="big">▤</div>No protocols in this filter.</div></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+};
+
+/* ---------------------------- DETAIL ---------------------------- */
+VIEWS.detail = () => {
+  const p = protocols.find(x => x.id === state.selected);
+  if (!p) return `<div class="empty"><div class="big">?</div>Protocol not found.</div>`;
+  const idx = stageIndex(p.status);
+  const doneCount = p.reviews.length;
+  const totalRev = Math.max(p.reviewers.length, 1);
+  const pct = Math.min(100, Math.round((doneCount/totalRev)*100));
+
+  return `
+    <div class="page-head">
+      <div>
+        <button class="btn sm" data-action="nav" data-view="submissions" style="margin-bottom:10px">← Back</button>
+        <h1 style="max-width:840px">${esc(p.title)}</h1>
+        <p><span class="mono" style="color:#8ed8ff">${esc(p.id)}</span> &nbsp;
+           <span class="chip ${STATUS[p.status].cls}">${STATUS[p.status].label}</span></p>
+      </div>
+    </div>
+
+    <div class="stagebar">
+      ${STAGES.map((s,i)=>`
+        <div class="sb ${i<idx?'done':''} ${i===idx?'current':''}">
+          <div class="bar"></div>${STAGE_LABEL[s]}
+        </div>`).join('')}
+    </div>
+
+    <div class="grid g2" style="align-items:start">
+      <div>
+        <div class="card card-pad" style="margin-bottom:16px">
+          <h3>Protocol information</h3>
+          <div class="info-grid" style="margin-top:14px">
+            <div><div class="k">Principal Investigator</div><div class="v">${esc(p.pi)}</div></div>
+            <div><div class="k">Institution</div><div class="v">${esc(p.institution)}</div></div>
+            <div><div class="k">Study type</div><div class="v">${esc(p.type)}</div></div>
+            <div><div class="k">Sponsor</div><div class="v">${esc(p.sponsor)}</div></div>
+            <div><div class="k">Submitted</div><div class="v">${esc(p.submitted)}</div></div>
+            <div><div class="k">Assigned reviewers</div><div class="v">${p.reviewers.length?esc(p.reviewers.join(', ')):'—'}</div></div>
+          </div>
+        </div>
+
+        <div class="card card-pad" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div>${gauge(pct, 88, pct===100?'#34d399':'#38bdf8')}</div>
+            <div style="flex:1;min-width:140px">
+              <h3 style="margin:0">Review progress</h3>
+              <p class="small muted" style="margin:4px 0 0">
+                ${doneCount} of ${p.reviewers.length||0} assigned assessments received
+              </p>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            ${p.reviews.length ? p.reviews.map(r=>{
+              const cls = r.recommendation.includes('Not')?'ch-rose':
+                          r.recommendation.includes('major')?'ch-amber':'ch-green';
+              return `<div style="border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:10px;
+                          background:rgba(255,255,255,.03)">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <b style="font-size:12.8px">${esc(r.reviewer)}</b>
+                  <span class="chip ${cls}">${esc(r.recommendation)}</span>
+                  <span class="spacer"></span>
+                  <span class="small muted">${esc(r.date)}</span>
+                </div>
+                <div class="small" style="margin-top:7px;color:#b8c9da">${esc(r.comments)}</div>
+              </div>`;
+            }).join('') : '<p class="muted small">No assessments submitted yet.</p>'}
+          </div>
+        </div>
+
+        ${p.decision ? `
+          <div class="card card-pad" style="margin-bottom:16px">
+            <h3>Committee decision</h3>
+            <div class="note ok" style="margin-top:10px">
+              <b>${esc(p.decision)}</b><br>${esc(p.decisionNote||'')}
+            </div>
+          </div>`:''}
+
+        <div class="card card-pad">
+          <h3>Audit trail</h3>
+          <ul class="timeline" style="margin-top:14px">
+            ${p.history.slice().reverse().map(x=>`<li>
+              <div class="t-date">${esc(x.date)}</div>
+              <div class="t-act">${esc(x.action)}</div>
+              <div class="t-note">${esc(x.actor)}${x.note?' — '+esc(x.note):''}</div>
+            </li>`).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="card card-pad glow">
+          <h3>Actions available to you</h3>
+          <p class="small muted" style="margin-top:-2px">${esc(ROLES[state.role].title)}</p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+            ${detailActions(p)}
+          </div>
+          ${p.status!=='closed'?`<div class="note info" style="margin-top:16px">
+            <b>SOP reference:</b> status changes must be recorded in the minutes and the assessment/decision
+            forms (AF 01-008, AF 03-008) and communicated within the SOP timelines.
+          </div>`:''}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+function detailActions(p) {
+  const r = state.role, out = [];
+  if (r==='secretariat' && p.status==='submitted')
+    out.push(`<button class="btn primary" data-action="verify">✓ Verify completeness</button>`);
+  if (r==='secretariat' && p.status==='verified')
+    out.push(`<button class="btn primary" data-action="assign">👥 Assign reviewers</button>`);
+  if (r==='reviewer' && p.reviewers.includes(me()) && !p.reviews.some(x=>x.reviewer===me())
+      && ['assigned','reviewing'].includes(p.status))
+    out.push(`<button class="btn primary" data-action="assess">✎ Open assessment form</button>`);
+  if (r==='secretariat' && p.status==='review_complete')
+    out.push(`<button class="btn primary" data-action="agenda">📅 Place on committee agenda</button>`);
+  if ((r==='chairperson'||r==='secretariat') && ['agenda','review_complete'].includes(p.status))
+    out.push(`<button class="btn go" data-action="decide">⚖ Record committee decision</button>`);
+  if (r==='secretariat' && p.status==='decided')
+    out.push(`<button class="btn go" data-action="communicate">✉ Send action letter &amp; close</button>`);
+  if (r==='investigator' && p.pi===me() && p.status==='returned')
+    out.push(`<button class="btn primary" data-action="resubmit">↻ Resubmit corrected package</button>`);
+  if (r==='investigator' && p.pi===me())
+    out.push(`<button class="btn" data-action="amend">✎ Submit amendment</button>`);
+  if (!out.length)
+    out.push(`<div class="note info">No action is available to <b>${esc(ROLES[r].title)}</b> at this stage.
+      ${p.status==='closed'?'This protocol is closed.':'The next step belongs to another role.'}</div>`);
+  return out.join('');
+}
+
+/* ---------------------------- MY REVIEWS ---------------------------- */
+VIEWS.review = () => {
+  const mine = protocols.filter(p => p.reviewers.includes(me()));
+  const pending = mine.filter(p => !p.reviews.some(r=>r.reviewer===me()) && ['assigned','reviewing'].includes(p.status));
+  const done = mine.filter(p => p.reviews.some(r=>r.reviewer===me()));
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>My Reviews</h1>
+        <p>Assess assigned protocols using AF 01-008 — ${CRITERIA.length} ethical criteria (SOP 3.3 §5.3.2)</p>
+      </div>
+      <div class="spacer"></div>
+      <div class="card" style="padding:12px 16px;display:flex;gap:16px;align-items:center">
+        ${gauge(pending.length?Math.round((done.length/(done.length+pending.length))*100):100, 62,
+                pending.length?'#fbbf24':'#34d399')}
+        <div class="small">
+          <div style="font-weight:750">${done.length} completed</div>
+          <div class="muted">${pending.length} pending</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line)">
+        <b>Pending assessments</b> <span class="chip ch-amber" style="margin-left:6px">${pending.length}</span>
+      </div>
+      <table>
+        <thead><tr><th>Protocol</th><th style="width:170px">Status</th><th style="width:120px">Action</th></tr></thead>
+        <tbody>
+          ${pending.map(p=>`<tr>
+            <td><div class="t-title">${esc(p.title)}</div>
+                <div class="t-sub"><span class="mono">${esc(p.id)}</span> · ${esc(p.pi)}</div></td>
+            <td><span class="chip ${STATUS[p.status].cls}">${STATUS[p.status].label}</span></td>
+            <td><button class="btn sm primary" data-action="assess" data-id="${esc(p.id)}">Assess</button></td>
+          </tr>`).join('') || `<tr><td colspan="3"><div class="empty"><div class="big">✓</div>No pending assessments.</div></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line)">
+        <b>Completed</b> <span class="chip ch-green" style="margin-left:6px">${done.length}</span>
+      </div>
+      <table>
+        <thead><tr><th>Protocol</th><th style="width:240px">My recommendation</th><th style="width:110px">Date</th></tr></thead>
+        <tbody>
+          ${done.map(p=>{
+            const r = p.reviews.find(x=>x.reviewer===me());
+            const cls = r.recommendation.includes('Not')?'ch-rose':
+                        r.recommendation.includes('major')?'ch-amber':'ch-green';
+            return `<tr class="clickable" data-action="open" data-id="${esc(p.id)}">
+              <td><div class="t-title">${esc(p.title)}</div><div class="t-sub mono">${esc(p.id)}</div></td>
+              <td><span class="chip ${cls}">${esc(r.recommendation)}</span></td>
+              <td class="small">${esc(r.date)}</td>
+            </tr>`;
+          }).join('') || `<tr><td colspan="3"><div class="empty">No completed reviews yet.</div></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+};
+
+/* ---------------------------- COMMITTEE ---------------------------- */
+VIEWS.committee = () => {
+  const agenda = protocols.filter(p => ['review_complete','agenda'].includes(p.status));
+  const decided = protocols.filter(p => p.status==='decided');
+  const closed = protocols.filter(p => p.status==='closed');
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Committee Meeting</h1>
+        <p>SOP 8.1 Agenda &amp; Minutes · SOP 8.2 Emergency meeting · SOP 3.3 §5.4 deliberation and voting</p>
+      </div>
+    </div>
+
+    <div class="note info">
+      <b>Meeting 04/2026</b> — Addis Ababa Health Bureau, Conference Room B · ${DEMO_TODAY} · 09:00<br>
+      Quorum: minimum 50% + one member, including at least one lay member and one medical scientist.
+    </div>
+
+    <div class="card" style="margin-bottom:18px;overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line)">
+        <b>Agenda items</b> <span class="chip ch-violet" style="margin-left:6px">${agenda.length}</span>
+      </div>
+      <table>
+        <thead><tr><th>Protocol</th><th style="width:210px">Reviewers</th>
+          <th style="width:170px">Status</th><th style="width:140px">Action</th></tr></thead>
+        <tbody>
+          ${agenda.map(p=>`<tr>
+            <td><div class="t-title">${esc(p.title)}</div><div class="t-sub mono">${esc(p.id)}</div></td>
+            <td class="small">${esc(p.reviewers.join(', '))}</td>
+            <td><span class="chip ${STATUS[p.status].cls}">${STATUS[p.status].label}</span></td>
+            <td><button class="btn sm ${state.role==='chairperson'?'go':''}" data-action="decide" data-id="${esc(p.id)}">
+              ${state.role==='chairperson'?'Record decision':'View'}</button></td>
+          </tr>`).join('') || `<tr><td colspan="4"><div class="empty">No items on the agenda.</div></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid g2">
+      <div class="card card-pad">
+        <h3>Decisions awaiting communication <span class="chip ch-sky">${decided.length}</span></h3>
+        ${decided.map(p=>`
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:650" class="small mono">${esc(p.id)}</div>
+              <div class="small muted">${esc(p.decision)}</div>
+            </div>
+            <button class="btn sm" data-action="communicate" data-id="${esc(p.id)}">Send letter</button>
+          </div>`).join('') || '<p class="muted small">None.</p>'}
+      </div>
+
+      <div class="card card-pad">
+        <h3>Closed protocols <span class="chip ch-green">${closed.length}</span></h3>
+        <ul class="timeline" style="margin-top:14px">
+          ${closed.map(p=>`<li>
+            <div class="t-date mono">${esc(p.id)}</div>
+            <div class="t-act">${esc(p.decision)}</div>
+            <div class="t-note">${esc(p.title)}</div>
+          </li>`).join('') || '<li class="muted">None yet.</li>'}
+        </ul>
+      </div>
+    </div>
+  `;
+};
+
+/* ---------------------------- SAFETY ---------------------------- */
+VIEWS.safety = () => {
+  const pending = safetyReports.filter(s => s.status==='Pending review').length;
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Safety Reports</h1>
+        <p>SOP 6.1 Review of AE / SAE / unanticipated events · SOP 6.2 SAE form · SOP 5.1 Non-compliance</p>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-bottom:18px">
+      <div class="card kpi k-rose"><div class="lbl">Pending review</div>
+        <div class="val" data-count="${pending}">0</div></div>
+      <div class="card kpi k-sky"><div class="lbl">Total reports</div>
+        <div class="val" data-count="${safetyReports.length}">0</div></div>
+      <div class="card kpi k-em"><div class="lbl">Reviewed</div>
+        <div class="val" data-count="${safetyReports.length-pending}">0</div></div>
+    </div>
+
+    <div class="card" style="overflow:hidden">
+      <table>
+        <thead><tr>
+          <th style="width:92px">ID</th><th>Event</th><th style="width:196px">Protocol</th>
+          <th style="width:132px">Relatedness</th><th style="width:142px">Seriousness</th>
+          <th style="width:200px">Status</th><th style="width:120px"></th>
+        </tr></thead>
+        <tbody>
+          ${safetyReports.map(s=>`<tr>
+            <td class="mono" style="color:#8ed8ff">${esc(s.id)}</td>
+            <td><div class="t-title">${esc(s.event)}</div><div class="t-sub">${esc(s.date)}</div></td>
+            <td class="mono small">${esc(s.protocol)}</td>
+            <td class="small">${esc(s.relatedness)}</td>
+            <td class="small">${esc(s.seriousness)}</td>
+            <td><span class="chip ${s.status.startsWith('Pending')?'ch-amber':'ch-green'}">${esc(s.status)}</span></td>
+            <td>${s.status==='Pending review' && ['chairperson','secretariat','reviewer'].includes(state.role)
+              ? `<button class="btn sm primary" data-action="review-safety" data-id="${esc(s.id)}">Review</button>`:''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+};
+
+/* ---------------------------- ARCHIVE ---------------------------- */
+VIEWS.archive = () => {
+  const closed = protocols.filter(p => p.status==='closed');
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Archive</h1>
+        <p>SOP 9.1 Active file · SOP 9.2 Archives and retrieval · SOP 9.3 Maintaining confidentiality</p>
+      </div>
+    </div>
+
+    <div class="note warn">
+      <b>Retention:</b> the source package contains conflicting retention formulations
+      (indefinite storage vs. minimum period after study completion). One retention schedule must be formally approved.
+    </div>
+
+    <div class="card" style="overflow:hidden">
+      <table>
+        <thead><tr><th>Protocol No.</th><th>Title</th><th style="width:200px">Decision</th>
+          <th style="width:130px">Archived</th><th style="width:110px"></th></tr></thead>
+        <tbody>
+          ${closed.map(p=>`<tr class="clickable" data-action="open" data-id="${esc(p.id)}">
+            <td class="mono" style="color:#8ed8ff">${esc(p.id)}</td>
+            <td><div class="t-title">${esc(p.title)}</div><div class="t-sub">${esc(p.pi)}</div></td>
+            <td><span class="chip ch-green">${esc(p.decision||'—')}</span></td>
+            <td class="small">${esc(p.history[p.history.length-1].date)}</td>
+            <td><button class="btn sm" data-action="open" data-id="${esc(p.id)}">Open</button></td>
+          </tr>`).join('') || `<tr><td colspan="5"><div class="empty">No archived protocols.</div></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+};
+
+/* ---------------------------- SYSTEM & AUDIT ---------------------------- */
+VIEWS.system = () => {
+  const events = protocols.flatMap(p => p.history.map(x => ({ ...x, pid:p.id })))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>System &amp; Audit</h1>
+        <p>Digital support functions — the system records and enforces controls; it has
+           <b>no independent decision authority</b>.</p>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:18px;align-items:start">
+      <div class="card card-pad">
+        <h3>Access control matrix</h3>
+        <table style="margin-top:12px">
+          <thead><tr><th>Function</th><th style="width:62px;text-align:center">Inv</th>
+            <th style="width:62px;text-align:center">Secr</th><th style="width:62px;text-align:center">Rev</th>
+            <th style="width:62px;text-align:center">Chair</th></tr></thead>
+          <tbody>
+            ${[
+              ['Submit protocol','✓','—','—','—'],
+              ['Verify completeness','—','✓','—','—'],
+              ['Assign reviewers','—','✓','—','✓'],
+              ['Submit assessment','—','—','✓','—'],
+              ['Record decision','—','—','—','✓'],
+              ['Send action letter','—','✓','—','—'],
+              ['Archive protocol','—','✓','—','—'],
+              ['View audit trail','own','all','assigned','all']
+            ].map(r=>`<tr>${r.map((c,i)=> i===0
+              ? `<td class="small">${c}</td>`
+              : `<td class="small" style="text-align:center;color:${c==='✓'?'#34d399':'#5f7891'}">${c}</td>`).join('')}</tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card card-pad">
+        <h3>Document control</h3>
+        <div class="info-grid" style="grid-template-columns:1fr 1fr;margin-top:12px">
+          <div><div class="k">SOP edition</div><div class="v">Consolidated English Edition</div></div>
+          <div><div class="k">Effective</div><div class="v" style="color:#fbbf24">Draft — not approved</div></div>
+          <div><div class="k">Protocol numbering</div><div class="v mono">XXX/MM-YY</div></div>
+          <div><div class="k">Form codes</div><div class="v mono">AF 01-007 … AF 03-008</div></div>
+        </div>
+        <div class="note warn" style="margin-top:16px">
+          <b>Pending institutional confirmation:</b> SOP numbering vs. index, quorum and composition,
+          expedited-review authority, retention schedule, dated regulatory references, legacy drive paths.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line)"><b>Audit trail — all protocols</b></div>
+      <table>
+        <thead><tr><th style="width:112px">Date</th><th style="width:210px">Protocol</th>
+          <th style="width:210px">Actor</th><th>Action</th></tr></thead>
+        <tbody>
+          ${events.map(e=>`<tr>
+            <td class="small">${esc(e.date)}</td>
+            <td class="mono small" style="color:#8ed8ff">${esc(e.pid)}</td>
+            <td class="small">${esc(e.actor)}</td>
+            <td class="small">${esc(e.action)}${e.note?' — <span class="muted">'+esc(e.note)+'</span>':''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+};
+
+/* ---------------------------- ROLES & DUTIES ---------------------------- */
+VIEWS.roles = () => {
+  const table = [
+    ['Investigator / PI','🧪',
+     'Submits complete package; conducts study per approved protocol; requests amendments before implementing; reports AEs/SAEs, deviations, progress and final reports within SOP timelines; cooperates with monitoring and audit; protects confidentiality.'],
+    ['Secretariat','🗂',
+     'Receives, records, verifies and numbers submissions; creates protocol files; prepares agendas and minutes; distributes packages; records decisions; issues action letters; maintains files, archive, confidentiality logs and SOP master file. <b>No decision authority.</b>'],
+    ['Reviewers','✎',
+     'Review assigned protocols; complete the Assessment Form against the ethical criteria; give a recommendation; present at the meeting; review resubmissions, amendments, continuing and safety reports; declare conflicts; maintain confidentiality.'],
+    ['Committee / Chairperson','⚖',
+     'Constitute the committee and maintain quorum and composition; review, discuss and vote; approve, require modification or disapprove; monitor safety and continuing review; the Chair signs decisions, assigns reviewers, reports to AAHB and may approve eligible expedited items.'],
+    ['System / digital (if used)','⚙',
+     'Support — not replace — approved procedures: access control, audit trails, version control, e-signatures where approved, backup, retention and retrieval. Validated and approved before use; <b>no independent decision-making authority</b>.']
+  ];
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Roles &amp; Duties</h1>
+        <p>Consolidated role-responsibility matrix derived from the SOP package</p>
+      </div>
+    </div>
+    <div class="grid g2">
+      ${table.map(([role,ico,desc])=>`
+        <div class="card card-pad">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div style="width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:18px;
+              background:linear-gradient(140deg,rgba(56,189,248,.26),rgba(167,139,250,.2));border:1px solid var(--line-2)">${ico}</div>
+            <h3 style="margin:0;color:#bfe8ff">${role}</h3>
+          </div>
+          <p class="small" style="margin:10px 0 0;color:#b8c9da;line-height:1.6">${desc}</p>
+        </div>`).join('')}
+    </div>
+    <div class="note info" style="margin-top:18px">
+      The SOP assigns ethical approval authority to the <b>Committee/Chairperson as authorized</b>,
+      administrative control to the <b>Secretariat</b>, review duties to <b>assigned reviewers</b>,
+      study conduct and reporting to the <b>PI</b>, and only a support/control function to any <b>digital system</b>.
+    </div>
+  `;
+};
+
+/* =====================================================================
+   MODALS
+   ===================================================================== */
+function openModal(title, body, foot) {
+  document.getElementById('modalTitle').innerHTML = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFoot').innerHTML = foot || '';
+  document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+function modalNewSubmission() {
+  openModal('New protocol submission', `
+    <p class="small muted">SOP 3.1 — the Secretariat verifies completeness before numbering and review.</p>
+    <label class="fl">Protocol title</label>
+    <input type="text" id="ns-title" placeholder="e.g. A Randomized Trial of …">
+    <div class="grid g2">
+      <div><label class="fl">Study type</label>
+        <select id="ns-type">
+          <option>Clinical Trial — Phase I</option><option>Clinical Trial — Phase II</option>
+          <option selected>Clinical Trial — Phase III</option><option>Observational — Cohort</option>
+          <option>Observational — Community Survey</option><option>Genetic Study — Stored Specimens</option>
+          <option>Medical Device Study — NSR</option><option>Medical Device Study — SR</option>
+          <option>Community Intervention</option>
+        </select></div>
+      <div><label class="fl">Sponsor</label>
+        <input type="text" id="ns-sponsor" placeholder="e.g. Ministry of Health"></div>
+    </div>
+    <label class="fl">Institution</label>
+    <input type="text" id="ns-inst" placeholder="e.g. Addis Ababa University">
+    <label class="fl">Short description</label>
+    <textarea id="ns-desc" placeholder="Brief purpose and methodology"></textarea>
+    <div class="note info" style="margin-top:14px">Submitting as <b>${esc(me())}</b>.
+      A protocol number will be assigned by the Secretariat after verification.</div>
+  `, `<button class="btn" data-action="close-modal">Cancel</button>
+      <button class="btn primary" data-action="submit-new">Submit protocol</button>`);
+}
+
+function modalAssign(p) {
+  openModal('Assign primary reviewers', `
+    <p class="small muted">SOP 3.3 — the Chairperson and Secretariat assign 2 primary reviewers.
+      The protocol is sent to all committee members.</p>
+    <div style="margin-top:14px">
+      ${REVIEWER_POOL.map((r,i)=>`
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);
+          border-radius:11px;margin-bottom:8px;cursor:pointer;background:rgba(255,255,255,.03);transition:.15s">
+          <input type="checkbox" name="rev" value="${esc(r)}" ${i<2?'checked':''} style="accent-color:#38bdf8">
+          <span style="font-weight:600">${esc(r)}</span>
+        </label>`).join('')}
+    </div>
+  `, `<button class="btn" data-action="close-modal">Cancel</button>
+      <button class="btn primary" data-action="save-assign" data-id="${esc(p.id)}">Assign reviewers</button>`);
+}
+
+function modalAssessment(p) {
+  const html = CRITERIA.map((c,i)=>`
+    <div class="crit">
+      <div class="crit-label">${i+1}. ${esc(c)}</div>
+      <div class="crit-opts">
+        <label><input type="radio" name="c${i}" value="Appropriate" checked> Appropriate</label>
+        <label><input type="radio" name="c${i}" value="Not appropriate"> Not appropriate</label>
+        <label><input type="radio" name="c${i}" value="N/A"> N/A</label>
+      </div>
+    </div>`).join('');
+
+  openModal('Assessment Form — AF 01-008', `
+    <div class="note info"><b>${esc(p.id)}</b><br>${esc(p.title)}</div>
+    <p class="small muted">SOP 3.3 §5.3.2 — the reviewer considers the following criteria.</p>
+    ${html}
+    <label class="fl">Recommendation</label>
+    <select id="f-rec">
+      <option>Approved</option>
+      <option selected>Approved with minor modification</option>
+      <option>Approved with major modification</option>
+      <option>Not Approved</option>
+    </select>
+    <label class="fl">Comments to the committee</label>
+    <textarea id="f-comments" placeholder="Record comments, required modifications and reasons"></textarea>
+  `, `<button class="btn" data-action="close-modal">Cancel</button>
+      <button class="btn primary" data-action="save-assessment" data-id="${esc(p.id)}">Submit assessment</button>`);
+}
+
+function modalDecision(p) {
+  openModal('Committee decision — AF 03-008', `
+    <div class="note info"><b>${esc(p.id)}</b><br>${esc(p.title)}</div>
+    <p class="small muted">SOP 3.3 §5.4 — the Chairperson calls for a separate vote on each element in review.</p>
+    <label class="fl">Decision</label>
+    <select id="d-dec">
+      <option>Approved</option>
+      <option>Approved with minor modification</option>
+      <option>Approved with major modification</option>
+      <option>Not Approved</option>
+      <option>Deferred — further information requested</option>
+    </select>
+    <div class="grid g3" style="margin-top:12px">
+      <div><label class="fl">Votes for</label><input type="text" id="d-for" value="6"></div>
+      <div><label class="fl">Against</label><input type="text" id="d-against" value="0"></div>
+      <div><label class="fl">Abstentions</label><input type="text" id="d-abstain" value="1"></div>
+    </div>
+    <label class="fl">Conditions / reasons (recorded in the minutes)</label>
+    <textarea id="d-note" placeholder="e.g. Revise consent form to include IRERC contact details"></textarea>
+    <div class="note warn" style="margin-top:14px">
+      Quorum must be maintained throughout discussion and voting. Members with a conflict must leave the room.
+    </div>
+  `, `<button class="btn" data-action="close-modal">Cancel</button>
+      <button class="btn go" data-action="save-decision" data-id="${esc(p.id)}">Record decision</button>`);
+}
+
+function modalCommunicate(p) {
+  openModal('Action letter', `
+    <div class="note info"><b>${esc(p.id)}</b> — ${esc(p.pi)}</div>
+    <p class="small muted">SOP 3.3 §5.6.4 — the Secretariat prepares the action letter, lists approved documents,
+      sets the continuing-review date and states the appeal route.</p>
+    <label class="fl">Decision</label>
+    <input type="text" id="c-dec" value="${esc(p.decision||'Approved')}" readonly>
+    <label class="fl">Continuing review due</label>
+    <input type="date" id="c-date" value="2027-03-25">
+    <label class="fl">Message to the investigator</label>
+    <textarea id="c-msg">Your protocol has been reviewed by AAPHRELIM-IRERC. The approved documents are listed below.
+Continuing review is due on the date shown above. Any amendment must be submitted for approval before implementation.
+If you wish to appeal this decision, submit your appeal in writing to the AAPHRELIM-IRERC Chairperson with justification.</textarea>
+  `, `<button class="btn" data-action="close-modal">Cancel</button>
+      <button class="btn go" data-action="save-communicate" data-id="${esc(p.id)}">Send &amp; close protocol</button>`);
+}
+
+function modalReviewSafety(id) {
+  const s = safetyReports.find(x=>x.id===id);
+  openModal('Review safety report — '+s.id, `
+    <div class="note info"><b>${esc(s.protocol)}</b><br>${esc(s.event)} · ${esc(s.date)}</div>
+    <div class="info-grid" style="grid-template-columns:1fr 1fr;margin-top:12px">
+      <div><div class="k">Relatedness</div><div class="v">${esc(s.relatedness)}</div></div>
+      <div><div class="k">Seriousness</div><div class="v">${esc(s.seriousness)}</div></div>
+    </div>
+    <label class="fl">Action</label>
+    <select id="s-act">
+      <option>No Further Action Required</option>
+      <option>Request Information</option>
+      <option>Recommend Further Action</option>
+    </select>
+    <label class="fl">Note for the minutes</label>
+    <textarea id="s-note" placeholder="Summary of the committee's consideration"></textarea>
+  `, `<button class="btn" data-action="close-modal">Cancel</button>
+      <button class="btn primary" data-action="save-safety" data-id="${esc(s.id)}">Record action</button>`);
+}
+
+/* =====================================================================
+   CONFETTI
+   ===================================================================== */
+function burstConfetti() {
+  const colors = ['#38bdf8','#34d399','#fbbf24','#a78bfa','#fb7185','#2dd4bf'];
+  for (let i=0;i<70;i++) {
+    const d = document.createElement('div');
+    d.className = 'confetti';
+    d.style.left = Math.random()*100 + 'vw';
+    d.style.top = '-20px';
+    d.style.background = colors[Math.floor(Math.random()*colors.length)];
+    d.style.animationDuration = (1.6 + Math.random()*1.4) + 's';
+    d.style.animationDelay = (Math.random()*0.35) + 's';
+    d.style.width = (6 + Math.random()*7) + 'px';
+    d.style.height = (10 + Math.random()*9) + 'px';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(), 3400);
+  }
+}
+
+/* =====================================================================
+   ACTION HANDLER
+   ===================================================================== */
+document.body.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action, id = el.dataset.id;
+  const p = protocols.find(x => x.id === (id || state.selected));
+
+  switch (a) {
+
+    case 'nav': state.view = el.dataset.view; render(); break;
+    case 'filter': state.filter = el.dataset.f; render(); break;
+    case 'open': state.selected = id; state.view = 'detail'; render(); break;
+    case 'close-modal': closeModal(); break;
+
+    case 'login':
+      state.role = el.dataset.role; state.view='dashboard'; state.selected=null; state.filter='all';
+      document.getElementById('login').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      render();
+      toast('Signed in as ' + ROLES[state.role].title, 'ok');
+      break;
+
+    case 'logout':
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('login').classList.remove('hidden');
+      closeModal(); break;
+
+    case 'reset-demo':
+      if (confirm('Reset all demo data to the original fictitious state?')) location.reload();
+      break;
+
+    case 'new-submission': modalNewSubmission(); break;
+
+    case 'submit-new': {
+      const title = document.getElementById('ns-title').value.trim();
+      if (!title) { toast('Protocol title is required','warn'); return; }
+      const n = String(protocols.length+1).padStart(3,'0');
+      const newP = {
+        id:`AAPHRELIM-IRERC ${n}/03-26`, title,
+        type: document.getElementById('ns-type').value,
+        pi: me(),
+        institution: document.getElementById('ns-inst').value || '—',
+        sponsor: document.getElementById('ns-sponsor').value || '—',
+        submitted: today(), status:'submitted', decision:null, decisionNote:'',
+        reviewers:[], reviews:[],
+        history:[h(today(), me(), 'Protocol submitted', 'Submitted through the demo portal')]
+      };
+      protocols.unshift(newP);
+      closeModal();
+      toast('Protocol submitted — awaiting Secretariat verification','ok');
+      state.selected = newP.id; state.view='detail'; render();
+      break;
+    }
+
+    case 'resubmit':
+      p.status='verified'; addHistory(p, me(), 'Corrected package resubmitted');
+      toast('Resubmitted for review','ok'); render(); break;
+
+    case 'amend':
+      addHistory(p, me(), 'Amendment submitted', 'Awaiting Secretariat processing');
+      toast('Amendment recorded (demo)','ok'); render(); break;
+
+    case 'verify':
+      p.status='verified';
+      addHistory(p, me(), 'Completeness verified', 'Checklist AF 01-007 complete');
+      toast('Completeness verified','ok'); render(); break;
+
+    case 'assign': modalAssign(p); break;
+
+    case 'save-assign': {
+      const picked = [...document.querySelectorAll('input[name="rev"]:checked')].map(x=>x.value);
+      if (picked.length < 2) { toast('Select at least 2 primary reviewers','warn'); return; }
+      p.reviewers = picked; p.status='assigned';
+      addHistory(p, me(), 'Reviewers assigned', picked.join(', '));
+      closeModal(); toast('Reviewers assigned','ok'); render(); break;
+    }
+
+    case 'agenda':
+      p.status='agenda';
+      addHistory(p, me(), 'Placed on committee agenda', 'Meeting 04/2026');
+      toast('Added to the committee agenda','ok'); render(); break;
+
+    case 'communicate': modalCommunicate(p); break;
+
+    case 'save-communicate':
+      p.status='closed';
+      addHistory(p, me(), 'Action letter issued', 'Protocol closed and archived');
+      closeModal(); toast('Action letter sent — protocol closed','ok');
+      burstConfetti(); render(); break;
+
+    case 'assess': modalAssessment(p); break;
+
+    case 'save-assessment': {
+      const criteria = CRITERIA.map((c,i)=>{
+        const sel = document.querySelector(`input[name="c${i}"]:checked`);
+        return { criterion:c, result: sel?sel.value:'N/A' };
+      });
+      const rec = document.getElementById('f-rec').value;
+      const comments = document.getElementById('f-comments').value.trim();
+      p.reviews.push({ reviewer:me(), date:today(), recommendation:rec, comments, criteria });
+      if (p.status==='assigned') p.status='reviewing';
+      addHistory(p, me(), 'Assessment form submitted', rec);
+      if (p.reviews.length >= p.reviewers.length && p.reviewers.length > 0) {
+        p.status='review_complete';
+        addHistory(p, 'System', 'All assigned assessments received', 'Ready for committee agenda');
+      }
+      closeModal(); toast('Assessment submitted','ok'); render(); break;
+    }
+
+    case 'decide':
+      if (state.role !== 'chairperson') { state.selected = p.id; state.view='detail'; render(); return; }
+      modalDecision(p); break;
+
+    case 'save-decision': {
+      const dec = document.getElementById('d-dec').value;
+      const note = document.getElementById('d-note').value.trim();
+      p.decision = dec; p.decisionNote = note; p.status='decided';
+      addHistory(p, me(), 'Committee decision recorded', dec);
+      closeModal(); toast('Decision recorded','ok');
+      if (dec.startsWith('Approved')) burstConfetti();
+      render(); break;
+    }
+
+    case 'review-safety': modalReviewSafety(id); break;
+
+    case 'save-safety': {
+      const s = safetyReports.find(x=>x.id===id);
+      s.status = 'Reviewed — ' + document.getElementById('s-act').value;
+      closeModal(); toast('Safety report action recorded','ok'); render(); break;
+    }
+  }
+});
+
+/* pointer-tracked glow on role cards */
+document.addEventListener('pointermove', e => {
+  const btn = e.target.closest('.role-btn');
+  if (!btn) return;
+  const r = btn.getBoundingClientRect();
+  btn.style.setProperty('--mx', ((e.clientX-r.left)/r.width*100)+'%');
+  btn.style.setProperty('--my', ((e.clientY-r.top)/r.height*100)+'%');
+});
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+document.getElementById('roleGrid').innerHTML = Object.entries(ROLES).map(([key,r])=>`
+  <button class="role-btn" data-action="login" data-role="${key}">
+    <div class="ico">${r.icon}</div>
+    <div class="nm">${esc(r.title)}</div>
+    <div class="ds">${esc(r.desc)}</div>
+  </button>`).join('');
+</script>
+</body>
+</html>
