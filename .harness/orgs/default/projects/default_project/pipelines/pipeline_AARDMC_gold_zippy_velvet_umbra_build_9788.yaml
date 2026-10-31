@@ -1,0 +1,44 @@
+pipeline:
+  id: pipeline_AARDMC_gold_zippy_velvet_umbra_build_9788
+  name: pipeline_AARDMC_gold_zippy_velvet_umbra_build_9788
+  stages:
+    - id: build_and_test
+      name: Build and Test
+      runtime: cloud
+      clone:
+        enabled: true
+      cache:
+        enabled: true
+      steps:
+        - id: install
+          name: Install Dependencies
+          run:
+            shell: bash
+            script: npm ci
+        - id: typecheck
+          name: Type Check
+          run:
+            shell: bash
+            script: npm run typecheck
+        - id: lint
+          name: Lint
+          run:
+            shell: bash
+            script: npm run lint
+        - id: test
+          name: Test
+          run:
+            shell: bash
+            script: |-
+              mkdir -p .harness/reports
+              # Run script tests with JUnit reporter
+              node --test --test-reporter=spec --test-reporter=junit --test-reporter-destination=stdout --test-reporter-destination=.harness/reports/junit1.xml 'scripts/**/*.test.mjs'
+              # Run TypeScript tests with JUnit reporter
+              node --experimental-strip-types --test --test-reporter=spec --test-reporter=junit --test-reporter-destination=stdout --test-reporter-destination=.harness/reports/junit2.xml src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/preview-path-prefix.test.ts
+            report:
+              type: junit
+              paths:
+                - .harness/reports/junit1.xml
+                - .harness/reports/junit2.xml
+  tags:
+    onboarding: "true"
