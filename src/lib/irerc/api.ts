@@ -108,3 +108,30 @@ export const updateSubmissionFn = createServerFn({ method: "POST" })
       expectedVersion: data.expectedVersion,
     });
   });
+
+export const listUsersFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { resolveActor } = await import("./server/access.server");
+    const { listUsers } = await import("./server/users.server");
+    return listUsers(await resolveActor(context.userId));
+  });
+
+export const setUserRoleFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        userId: z.string().min(1).max(100),
+        role: z.enum(["investigator", "secretariat", "reviewer", "chair", "admin"]),
+        active: z.boolean(),
+        category: z.string().max(100).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }): Promise<{ ok: true }> => {
+    const { resolveActor } = await import("./server/access.server");
+    const { setUserRole } = await import("./server/users.server");
+    await setUserRole(await resolveActor(context.userId), data);
+    return { ok: true };
+  });

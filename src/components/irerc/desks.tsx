@@ -14,9 +14,13 @@ import {
   visibleTo,
   type Member,
   type MemberInput,
+  type RoleKey,
 } from "@/lib/irerc/model";
 import { useIrerc } from "@/lib/irerc/store";
 import { Btn, Card, Chip, Empty, Field, PageHead, fieldClass } from "@/components/irerc/ui";
+import { REMOTE } from "@/lib/irerc/remote-flag";
+import { listUsersFn, setUserRoleFn } from "@/lib/irerc/api";
+import type { ManagedUser } from "@/lib/irerc/server/users.server";
 
 export function ReviewsDesk() {
   const acting = useIrerc((s) => s.actingReviewer);
@@ -309,6 +313,7 @@ export function SystemDesk() {
           </p>
         </Card>
       </div>
+      {REMOTE ? <AccessPanel /> : null}
       <Card className="mt-4 overflow-hidden">
         <h2 className="border-b border-line px-4 py-3 font-semibold">Audit trail</h2>
         <ul className="max-h-[28rem] divide-y divide-line overflow-y-auto">
@@ -572,5 +577,70 @@ function DeskRows({
         </li>
       ))}
     </ul>
+  );
+}
+
+const ASSIGNABLE: RoleKey[] = ["investigator", "secretariat", "reviewer", "chair", "admin"];
+
+/** Admin-only: assign roles to people who have signed up and verified their e-mail. */
+function AccessPanel() {
+  const myRole = useIrerc((s) => s.role);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function load() {
+    try {
+      setUsers(await listUsersFn());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not load users.");
+    }
+  }
+  useEffect(() => {
+    if (myRole === "admin") void load();
+  }, [myRole]);
+  if (myRole !== "admin") return null;
+
+  async function change(u: ManagedUser, role: RoleKey, active: boolean) {
+    setBusy(u.userId);
+    setError(null);
+    try {
+      await setUserRoleFn({ data: { userId: u.userId, role, active } });
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The change was not saved.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Card className="mt-4 overflow-hidden">
+      <h2 className="border-b border-line px-4 py-3 font-semibold">Access control</h2>
+      {error ? <p role="alert" className="px-4 py-2 text-sm text-rose">{error}</p> : null}
+      <ul className="divide-y divide-line">
+        {users.map((u) => (
+          <li key={u.userId} className="grid items-center gap-2 px-4 py-3 text-sm md:grid-cols-[1fr_12rem_8rem]">
+            <span>
+              <span className="font-semibold">{u.name}</span>{" "}
+              <span className="text-muted">{u.email}</span>{" "}
+              {u.emailVerified ? null : <Chip tone="amber">E-mail not verified</Chip>}
+            </span>
+            <select
+              className={fieldClass}
+              value={u.role}
+              disabled={busy === u.userId}
+              onChange={(e) => void change(u, e.target.value as RoleKey, u.active)}
+              aria-label={`Role for ${u.name}`}
+            >
+              {ASSIGNABLE.map((r) => <option key={r} value={r}>{ROLES[r].name}</option>)}
+            </select>
+            <Btn kind={u.active ? "danger" : "go"} disabled={busy === u.userId} onClick={() => void change(u, u.role, !u.active)}>
+              {u.active ? "Deactivate" : "Activate"}
+            </Btn>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }

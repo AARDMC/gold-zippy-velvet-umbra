@@ -40,7 +40,9 @@ export async function resolveActor(userId: string, sql?: Sql): Promise<Actor> {
 
   let role: RoleKey = "investigator";
   const bootstrap = env("IRERC_BOOTSTRAP_ADMIN_EMAIL")?.toLowerCase();
-  if (bootstrap && user.emailVerified && user.email.toLowerCase() === bootstrap) {
+  const mailConfigured = Boolean(env("RESEND_API_KEY") && env("IRERC_MAIL_FROM"));
+  const trusted = Boolean(user.emailVerified) || !mailConfigured;
+  if (bootstrap && trusted && user.email.toLowerCase() === bootstrap) {
     const admins = await q`select 1 from irerc_user_role where role = 'admin' and active limit 1`;
     if (admins.length === 0) role = "admin";
   }

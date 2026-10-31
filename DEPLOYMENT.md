@@ -70,3 +70,15 @@ admin role assignment.
 Limits: files are capped at 3 MB each (Vercel request-body limit); move to a private
 object store before accepting large files. `.grok/app-env.json` is a workspace file; on
 Vercel set `VITE_AUTH_ENABLED` and `VITE_REMOTE_STORE` in project environment variables.
+
+## Sign-in (phase 2a)
+
+The export had no `/api/auth/*` handler and its `server.ts` signed users in through a
+hosted broker that needs platform credentials. It is replaced by standalone Better Auth:
+e-mail + password, e-mail verification and password reset through Resend.
+Routes added: `/api/auth/*`, `/login`, `/reset-password`. Admins assign roles under
+System and audit > Access control. The first administrator is the verified e-mail in
+`IRERC_BOOTSTRAP_ADMIN_EMAIL`.
+
+Extra variables: `RESEND_API_KEY`, `IRERC_MAIL_FROM`. Without them no verification
+e-mail is sent in production and nobody can sign in.

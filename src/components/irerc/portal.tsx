@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import { REMOTE, bootstrapRemoteSession } from "@/lib/irerc/remote";
+import { signOut } from "@/lib/auth/client";
+import { RedirectToSignIn } from "@/lib/auth/gates";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
   Activity,
   Archive,
@@ -112,9 +116,59 @@ export function Portal() {
 }
 
 function Gate() {
+  if (REMOTE) return <RemoteGate />;
   const role = useIrerc((s) => s.role);
   if (!role) return <RoleGate />;
   return <Shell />;
+}
+
+/** Server mode: a real session decides who you are; the role comes from the database. */
+function RemoteGate() {
+  const { user, isPending } = useCurrentUserState();
+  const role = useIrerc((s) => s.role);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const userId = user?.id ?? null;
+
+  useEffect(() => {
+    if (!userId) {
+      useIrerc.setState({ role: null, protocols: [] });
+      setLoaded(false);
+      return;
+    }
+    let active = true;
+    setError(null);
+    bootstrapRemoteSession()
+      .then(() => active && setLoaded(true))
+      .catch((cause) => active && setError(cause instanceof Error ? cause.message : "Could not load your portal."));
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  if (isPending) return <LoadingScreen />;
+  if (!user) return <RedirectToSignIn />;
+  if (error) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-ink p-6 text-center text-fg">
+        <div className="space-y-3">
+          <p className="font-display text-xl">The portal could not be loaded</p>
+          <p className="text-sm opacity-80">{error}</p>
+          <button className="rounded-xl border px-4 py-2" onClick={() => void signOut("/login")}>Sign out</button>
+        </div>
+      </div>
+    );
+  }
+  if (!loaded || !role) return <LoadingScreen />;
+  return <Shell />;
+}
+
+function LoadingScreen() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-ink text-fg">
+      <p className="font-display text-2xl">AAPHREML-IRERC</p>
+    </div>
+  );
 }
 
 function RoleGate() {
@@ -213,7 +267,8 @@ function Shell() {
   const role = useIrerc((s) => s.role)!;
   const view = useIrerc((s) => s.view);
   const go = useIrerc((s) => s.go);
-  const logout = useIrerc((s) => s.logout);
+  const localLogout = useIrerc((s) => s.logout);
+  const logout = () => (REMOTE ? void signOut("/login") : localLogout());
   const query = useIrerc((s) => s.query);
   const setQuery = useIrerc((s) => s.setQuery);
   const navOpen = useIrerc((s) => s.navOpen);

@@ -1345,7 +1345,7 @@ export const useIrerc = create<IrercState>()(
     {
       name: "aaphreml-irerc-portal-v3",
       partialize: (s) => ({
-        role: s.role,
+        role: REMOTE ? null : s.role,
         actingReviewer: s.actingReviewer,
         // Research records must never be cached in the browser in server mode.
         protocols: REMOTE ? [] : s.protocols,
