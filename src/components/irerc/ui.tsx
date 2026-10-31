@@ -18,9 +18,9 @@ export function Chip({ tone, children }: { tone: ChipTone; children: ReactNode }
 }
 
 const kinds = {
-  primary: "border-transparent bg-sky text-ink hover:brightness-105",
-  go: "border-transparent bg-em text-ink hover:brightness-105",
-  ghost: "border-line bg-ink-2/60 text-fg hover:border-line-2",
+  primary: "border-transparent bg-sky text-on-accent shadow-sm hover:brightness-110",
+  go: "border-transparent bg-em text-on-accent shadow-sm hover:brightness-110",
+  ghost: "border-line bg-ink-2/60 text-fg hover:border-sky/50 hover:bg-panel",
   danger: "border-rose/40 bg-rose/10 text-rose hover:bg-rose/20",
 } as const;
 
@@ -39,7 +39,7 @@ export function Btn({
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-2xl border border-line bg-panel/90 shadow-card ${className}`}>{children}</section>
+    <section className={`rounded-2xl border border-line/90 bg-panel shadow-card ${className}`}>{children}</section>
   );
 }
 
@@ -64,12 +64,12 @@ export function PageHead({
 }
 
 export const fieldClass =
-  "mt-1.5 w-full rounded-xl border border-line bg-ink-2 px-3 py-2.5 text-sm text-fg outline-none ring-sky/30 focus:border-sky focus:ring-2";
+  "mt-2 w-full rounded-xl border border-line bg-panel px-3.5 py-3 text-sm text-fg shadow-sm outline-none ring-sky/25 focus:border-sky focus:ring-4";
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="mt-3 block text-xs font-semibold tracking-wide text-muted uppercase">
-      {label}
+    <label className="mt-5 block text-sm font-semibold text-fg">
+      <span className="mb-1.5 block leading-snug">{label}</span>
       {children}
     </label>
   );
@@ -89,19 +89,21 @@ export function Modal({
   onClose,
   children,
   footer,
+  wide = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  wide?: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/75 p-3 backdrop-blur-sm sm:items-center" role="presentation" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-scrim/75 p-3 backdrop-blur-sm sm:items-center" role="presentation" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line-2 bg-ink-2 shadow-card"
+        className={`flex max-h-[90vh] w-full ${wide ? "max-w-4xl" : "max-w-2xl"} flex-col overflow-hidden rounded-2xl border border-line-2 bg-ink-2 shadow-card`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-line px-5 py-4">

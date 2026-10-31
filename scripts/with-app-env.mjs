@@ -20,7 +20,7 @@
  * `process.env`, which is why the merge has to happen before Vite starts.
  */
 import { spawn } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { constants as osConstants } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -111,7 +111,34 @@ function main(argv) {
     process.exit(2);
   }
   const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
-  const child = spawn(command, args, { stdio: "inherit", env });
+  const isWindows = process.platform === "win32";
+  if (isWindows) {
+    // See windows-realpath-shim.cjs — keeps Vite's Windows realpath probe from
+    // spawning a blocked `net use` child in restricted sandboxes.
+    const shim = join(projectRoot(), "scripts", "windows-realpath-shim.cjs");
+    if (existsSync(shim)) {
+      env.NODE_OPTIONS = [env.NODE_OPTIONS, `--require=${shim}`].filter(Boolean).join(" ");
+    }
+  }
+
+  // npm bin shims (`vite.cmd`) need a shell on Windows. Spawning Vite's JS entry
+  // with the current node binary avoids that shell (and its arg-escaping
+  // deprecation) while preserving signal forwarding.
+  let commandToRun = command;
+  let argsToRun = args;
+  if (isWindows && command === "vite") {
+    const viteBin = join(projectRoot(), "node_modules", "vite", "bin", "vite.js");
+    if (existsSync(viteBin)) {
+      commandToRun = process.execPath;
+      argsToRun = [viteBin, ...args];
+    }
+  }
+
+  const child = spawn(commandToRun, argsToRun, {
+    stdio: "inherit",
+    env,
+    shell: isWindows && commandToRun === command,
+  });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => child.kill(signal));

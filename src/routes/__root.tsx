@@ -1,9 +1,10 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { BRAND } from "@/lib/irerc/model";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "AAPHREML-IRERC Ethics Review";
+const APP_NAME = BRAND.title;
 
 export const Route = createRootRoute({
   head: () => ({
@@ -13,22 +14,26 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       {
         name: "description",
-        content:
-          "Addis Ababa City Administration Health Bureau institutional research ethics review workflow.",
+        content: BRAND.full,
       },
-      { name: "theme-color", content: "#07131c" },
+      { name: "theme-color", content: "#eef5ff" },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/png", href: "/seal.png" },
+      { rel: "apple-touch-icon", href: "/seal.png" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
     ],
   }),
   component: () => (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-theme="daylight">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('irerc-theme');var ok=['daylight','ocean','sand','midnight','graphite','forest','plum','rosewood'];if(t&&ok.indexOf(t)>-1){document.documentElement.dataset.theme=t}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>
         <PreviewHostBridge />

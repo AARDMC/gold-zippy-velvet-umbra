@@ -48,6 +48,7 @@ const globalRef = globalThis as typeof globalThis & {
   __pgSqlPromise__?: Promise<Sql>;
   __pgliteInstance__?: Promise<import("@electric-sql/pglite").PGlite>;
   __pgliteMigrateChain__?: Promise<void>;
+  __pgPool__?: import("pg").Pool;
 };
 
 /**
@@ -94,6 +95,7 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({ connectionString: databaseUrl });
+    globalRef.__pgPool__ = pool;
     return toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
@@ -192,6 +194,41 @@ export function getSql(): Promise<Sql> {
     throw err;
   });
   return sqlPromise;
+}
+
+/**
+ * Run several statements atomically. `fn` receives a `Sql` bound to ONE
+ * transaction; it commits when `fn` resolves and rolls back when it throws.
+ * Use it for any write that touches more than one table (submission, decisions).
+ */
+export async function withTransaction<T>(fn: (sql: Sql) => Promise<T>): Promise<T> {
+  await getSql(); // initialises the pool / PGLite and applies migrations
+  if (dbSource === "neon") {
+    const pool = globalRef.__pgPool__;
+    if (!pool) throw new Error("Postgres pool is not initialised");
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await fn(
+        toSql(async <R>(text: string, params: unknown[]) => (await client.query(text, params)).rows as R[]),
+      );
+      await client.query("COMMIT");
+      return result;
+    } catch (err) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // keep the original error
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+  const pg = await getPglite();
+  return pg.transaction(async (tx) =>
+    fn(toSql(async <R>(text: string, params: unknown[]) => (await tx.query<R>(text, params)).rows)),
+  );
 }
 
 /**

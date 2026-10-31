@@ -3,19 +3,19 @@ import {
   CATEGORY_EXPERTISE,
   CRITERIA,
   DECISIONS,
-  DOC_DEFS,
-  FOCUS_TO_CATEGORY,
-  MEMBERS,
   RECOMMENDATIONS,
-  REVIEWER_POOL,
   SECTIONS,
-  STUDY_TYPES,
   addDays,
   TODAY,
+  isReviewerSeat,
   type ReviewType,
 } from "@/lib/irerc/model";
+import { Printer } from "lucide-react";
 import { useIrerc } from "@/lib/irerc/store";
 import { Btn, Field, Modal, fieldClass } from "@/components/irerc/ui";
+import { ClearanceLetter } from "@/components/irerc/clearance-letter";
+import { SubmitModal } from "@/components/irerc/submit-modal";
+import { DocumentReviewModal } from "@/components/irerc/document-review";
 
 export function ModalHost() {
   const modal = useIrerc((s) => s.modal);
@@ -26,90 +26,99 @@ export function ModalHost() {
   if (modal.type === "assess") return <AssessModal id={modal.id} onClose={close} />;
   if (modal.type === "decide") return <DecideModal id={modal.id} onClose={close} />;
   if (modal.type === "letter") return <LetterModal id={modal.id} onClose={close} />;
+  if (modal.type === "certificate") return <CertificateModal id={modal.id} onClose={close} />;
   if (modal.type === "classify") return <ClassifyModal id={modal.id} onClose={close} />;
   if (modal.type === "safety") return <SafetyModal id={modal.id} onClose={close} />;
   if (modal.type === "sae") return <SaeModal id={modal.id} onClose={close} />;
   if (modal.type === "amend") return <AmendModal id={modal.id} onClose={close} />;
   if (modal.type === "continuing") return <ContinuingModal id={modal.id} onClose={close} />;
+  if (modal.type === "revision") return <RequestRevisionModal id={modal.id} onClose={close} />;
+  if (modal.type === "update") return <UpdateSubmissionModal id={modal.id} onClose={close} />;
+  if (modal.type === "review") return <DocumentReviewModal id={modal.id} initialCode={modal.code} onClose={close} />;
   return null;
 }
 
-function SubmitModal({ onClose }: { onClose: () => void }) {
-  const submit = useIrerc((s) => s.submitProtocol);
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState(STUDY_TYPES[2]);
-  const [focus, setFocus] = useState("Food and nutrition");
-  const [sponsor, setSponsor] = useState("");
-  const [institution, setInstitution] = useState("Addis Ababa University, School of Public Health");
-  const [site, setSite] = useState("");
-  const [summary, setSummary] = useState("");
-  const [consentLanguages, setConsent] = useState("Amharic");
-  const [vulnerable, setVulnerable] = useState("");
-  const [attached, setAttached] = useState<string[]>(DOC_DEFS.filter((d) => d.required).map((d) => d.code));
-  const category = FOCUS_TO_CATEGORY[focus];
+function UpdateSubmissionModal({ id, onClose }: { id: string; onClose: () => void }) {
+  const protocol = useIrerc((s) => s.protocols.find((p) => p.id === id));
+  if (!protocol) return null;
+  return <SubmitModal onClose={onClose} editProtocol={protocol} />;
+}
 
+function RequestRevisionModal({ id, onClose }: { id: string; onClose: () => void }) {
+  const protocol = useIrerc((s) => s.protocols.find((p) => p.id === id));
+  const request = useIrerc((s) => s.requestRevision);
+  const [comments, setComments] = useState(() =>
+    protocol
+      ? protocol.reviews
+          .map((review) => `${review.recommendation}: ${review.comments}`.trim())
+          .filter(Boolean)
+          .join("\n\n")
+      : "",
+  );
+  if (!protocol) return null;
   return (
     <Modal
-      title="New protocol submission"
+      title="Request document revisions"
       onClose={onClose}
-      footer={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => submit({ title, type, focus, sponsor, institution, site, summary, consentLanguages, vulnerable, attached })}>Submit protocol</Btn></>}
+      footer={
+        <>
+          <Btn onClick={onClose}>Cancel</Btn>
+          <Btn kind="primary" onClick={() => request(id, comments)}>Open 48-hour revision window</Btn>
+        </>
+      }
     >
-      <p className="text-sm text-muted">The secretariat screens the package before reviewers see it. A number is assigned now so the file can be tracked; review does not start until screening is complete.</p>
-      <Field label="Protocol title"><input className={fieldClass} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Short scientific title" /></Field>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Study type">
-          <select className={fieldClass} value={type} onChange={(e) => setType(e.target.value)}>{STUDY_TYPES.map((t) => <option key={t}>{t}</option>)}</select>
-        </Field>
-        <Field label="Health focus">
-          <select className={fieldClass} value={focus} onChange={(e) => setFocus(e.target.value)}>{Object.keys(FOCUS_TO_CATEGORY).map((t) => <option key={t}>{t}</option>)}</select>
-        </Field>
+      <div className="rounded-xl border border-amber/30 bg-amber/10 p-3 text-sm">
+        <p className="font-semibold text-amber">Assessment is complete</p>
+        <p className="mt-1 text-muted">
+          The PI will receive a notification with these instructions and a 48-hour window to upload revised
+          documents. The reviewers will be asked to reassess after the PI submits.
+        </p>
       </div>
-      <p className="mt-2 text-xs text-muted">Mapped category: {category}. Suggested reviewer expertise: {CATEGORY_EXPERTISE[category]}.</p>
-      <Field label="Sponsor"><input className={fieldClass} value={sponsor} onChange={(e) => setSponsor(e.target.value)} /></Field>
-      <Field label="Institution"><input className={fieldClass} value={institution} onChange={(e) => setInstitution(e.target.value)} /></Field>
-      <Field label="Study site"><input className={fieldClass} value={site} onChange={(e) => setSite(e.target.value)} /></Field>
-      <Field label="Summary"><textarea className={fieldClass} value={summary} onChange={(e) => setSummary(e.target.value)} /></Field>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Consent languages"><input className={fieldClass} value={consentLanguages} onChange={(e) => setConsent(e.target.value)} /></Field>
-        <Field label="Vulnerable participants"><input className={fieldClass} value={vulnerable} onChange={(e) => setVulnerable(e.target.value)} /></Field>
-      </div>
-      <p className="mt-4 text-xs font-semibold tracking-wide text-muted uppercase">Documents included</p>
-      <ul className="mt-2 space-y-2">
-        {DOC_DEFS.map((d) => (
-          <li key={d.code}>
-            <label className="flex min-h-11 items-center gap-3 rounded-xl border border-line px-3 text-sm">
-              <input
-                type="checkbox"
-                checked={attached.includes(d.code)}
-                onChange={(e) => setAttached((cur) => e.target.checked ? [...cur, d.code] : cur.filter((c) => c !== d.code))}
-              />
-              {d.name}{d.required ? "" : " — optional"}
-            </label>
-          </li>
-        ))}
-      </ul>
+      {protocol.reviews.length ? (
+        <div className="mt-3 space-y-2">
+          {protocol.reviews.map((review) => (
+            <div key={`${review.reviewer}-${review.date}`} className="rounded-xl border border-line bg-panel-2/50 p-3 text-sm">
+              <p className="font-semibold">{review.reviewer} · {review.recommendation}</p>
+              {review.comments ? <p className="mt-1 text-muted">{review.comments}</p> : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <Field label="Required revisions and instructions to the PI *">
+        <textarea
+          className={`${fieldClass} min-h-40`}
+          value={comments}
+          onChange={(event) => setComments(event.target.value)}
+          placeholder="List each document and the change required."
+        />
+      </Field>
     </Modal>
   );
 }
 
 function AssignModal({ id, onClose }: { id: string; onClose: () => void }) {
   const protocol = useIrerc((s) => s.protocols.find((p) => p.id === id));
+  const members = useIrerc((s) => s.members);
   const assign = useIrerc((s) => s.assignReviewers);
   const suggested = protocol ? CATEGORY_EXPERTISE[protocol.category] : "";
+  const pool = useMemo(
+    () => members.filter((m) => m.active && isReviewerSeat(m.seat)),
+    [members],
+  );
   const initial = useMemo(() => {
-    const match = REVIEWER_POOL.filter((m) => m.category === suggested).map((m) => m.name);
-    const lay = REVIEWER_POOL.find((m) => m.lay)?.name;
+    const match = pool.filter((m) => m.category === suggested).map((m) => m.name);
+    const lay = pool.find((m) => m.lay)?.name;
     const picked = [...match];
     if (lay && !picked.includes(lay)) picked.push(lay);
     return picked.slice(0, 2);
-  }, [suggested]);
+  }, [pool, suggested]);
   const [picked, setPicked] = useState<string[]>(initial);
   if (!protocol) return null;
   return (
     <Modal
       title="Assign reviewers"
       onClose={onClose}
-      footer={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => assign(id, picked)}>Assign</Btn></>}
+      footer={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" disabled={!picked.length} onClick={() => assign(id, picked)}>Assign</Btn></>}
     >
       <p className="text-sm text-muted">
         {protocol.reviewType === "Full Board Review"
@@ -117,23 +126,33 @@ function AssignModal({ id, onClose }: { id: string; onClose: () => void }) {
           : "Expedited review can proceed with one qualified reviewer. The chair still records the decision."}
         {suggested ? ` Suggested expertise: ${suggested}.` : ""}
       </p>
-      <ul className="mt-3 space-y-2">
-        {REVIEWER_POOL.map((m) => (
-          <li key={m.name}>
-            <label className="flex min-h-11 items-center gap-3 rounded-xl border border-line px-3 text-sm">
-              <input
-                type="checkbox"
-                checked={picked.includes(m.name)}
-                onChange={(e) => setPicked((cur) => e.target.checked ? [...cur, m.name] : cur.filter((n) => n !== m.name))}
-              />
-              <span>
-                <span className="font-semibold">{m.name}</span>
-                <span className="mt-0.5 block text-xs text-muted">{m.category}{m.lay ? " · lay member" : ""}{m.category === suggested ? " · suggested" : ""}</span>
-              </span>
-            </label>
-          </li>
-        ))}
-      </ul>
+      {pool.length === 0 ? (
+        <p className="mt-3 rounded-xl border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
+          No reviewers are registered. The Secretary must register members and reviewers in
+          Roster before reviewers can be assigned.
+        </p>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {pool.map((m) => (
+            <li key={m.id}>
+              <label className="flex min-h-11 items-center gap-3 rounded-xl border border-line px-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={picked.includes(m.name)}
+                  onChange={(e) => setPicked((cur) => e.target.checked ? [...cur, m.name] : cur.filter((n) => n !== m.name))}
+                />
+                <span>
+                  <span className="font-semibold">{m.name}</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {m.category}{m.lay ? " · lay member" : ""}{m.category === suggested ? " · suggested" : ""}
+                    {m.institution ? ` · ${m.institution}` : ""}
+                  </span>
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
     </Modal>
   );
 }
@@ -200,10 +219,11 @@ function AssessModal({ id, onClose }: { id: string; onClose: () => void }) {
 
 function DecideModal({ id, onClose }: { id: string; onClose: () => void }) {
   const protocol = useIrerc((s) => s.protocols.find((p) => p.id === id));
+  const memberCount = useIrerc((s) => s.members.filter((m) => m.active).length);
   const save = useIrerc((s) => s.saveDecision);
   const [decision, setDecision] = useState<string>(DECISIONS[0]);
   const [note, setNote] = useState("");
-  const [votes, setVotes] = useState({ for: 6, against: 0, abstain: 1 });
+  const [votes, setVotes] = useState({ for: 0, against: 0, abstain: 0 });
   if (!protocol) return null;
   const setVote = (k: "for" | "against" | "abstain", raw: string) => {
     const n = Math.max(0, Number(raw) || 0);
@@ -236,7 +256,7 @@ function DecideModal({ id, onClose }: { id: string; onClose: () => void }) {
         <textarea className={fieldClass} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       <p className="mt-3 text-xs text-muted">
-        Quorum is at least half of {MEMBERS.length} members, with a lay member and a scientist present. Members with a conflict leave the room. Total votes must be at least 4.
+        Quorum is at least half of {memberCount} active registered members, with a lay member and a scientist present. Members with a conflict leave the room. The recorded votes must meet the committee's quorum.
       </p>
     </Modal>
   );
@@ -248,21 +268,73 @@ function LetterModal({ id, onClose }: { id: string; onClose: () => void }) {
   const [date, setDate] = useState(addDays(TODAY, 365));
   const [message, setMessage] = useState("");
   if (!protocol) return null;
+  const approved = protocol.decision?.startsWith("Approved") ?? false;
   const body = message || defaultLetter(protocol.decision || "the recorded outcome", protocol.pi, date);
   return (
     <Modal
-      title="Action letter"
+      title={approved ? "Clearance letter" : "Action letter"}
       onClose={onClose}
-      footer={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="go" onClick={() => send(id, body, date)}>Send letter</Btn></>}
+      wide
+      footer={
+        <>
+          <Btn onClick={onClose}>Cancel</Btn>
+          {approved ? (
+            <Btn onClick={() => window.print()}>
+              <Printer className="size-4" /> Print letter
+            </Btn>
+          ) : null}
+          <Btn kind="go" onClick={() => send(id, body, date)}>
+            {approved ? "Issue clearance" : "Send action letter"}
+          </Btn>
+        </>
+      }
     >
-      <p className="text-sm text-muted">The secretariat prepares the letter. It lists the decision, continuing-review date when clearance is granted, and the appeal route. It does not change the committee’s decision.</p>
-      <Field label="Decision"><input className={fieldClass} readOnly value={protocol.decision || ""} /></Field>
-      <Field label="Continuing review due">
-        <input className={fieldClass} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-      </Field>
-      <Field label="Message">
-        <textarea className={`${fieldClass} min-h-40`} value={body} onChange={(e) => setMessage(e.target.value)} />
-      </Field>
+      <p className="no-print text-sm text-muted">
+        {approved
+          ? "The clearance letter is generated from the recorded committee decision. Printing uses the browser print dialog, where you can save it as a PDF."
+          : "The secretariat prepares the letter. It lists the decision, any continuing-review date, and the appeal route. It does not change the committee's decision."}
+      </p>
+      <div className="no-print mt-3 grid gap-3 sm:grid-cols-2">
+        <Field label="Decision">
+          <input className={fieldClass} readOnly value={protocol.decision || ""} />
+        </Field>
+        <Field label="Continuing review due">
+          <input className={fieldClass} type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+        </Field>
+      </div>
+      {approved ? (
+        <div className="mt-4 overflow-x-auto">
+          <ClearanceLetter protocol={protocol} />
+        </div>
+      ) : (
+        <Field label="Message">
+          <textarea className={`${fieldClass} min-h-40`} value={body} onChange={(event) => setMessage(event.target.value)} />
+        </Field>
+      )}
+    </Modal>
+  );
+}
+
+function CertificateModal({ id, onClose }: { id: string; onClose: () => void }) {
+  const protocol = useIrerc((s) => s.protocols.find((p) => p.id === id));
+  if (!protocol) return null;
+  return (
+    <Modal
+      title="Clearance letter"
+      onClose={onClose}
+      wide
+      footer={
+        <>
+          <Btn onClick={onClose}>Close</Btn>
+          <Btn kind="primary" onClick={() => window.print()}>
+            <Printer className="size-4" /> Print / save as PDF
+          </Btn>
+        </>
+      }
+    >
+      <div className="overflow-x-auto">
+        <ClearanceLetter protocol={protocol} />
+      </div>
     </Modal>
   );
 }
@@ -272,7 +344,7 @@ function defaultLetter(decision: string, pi: string, date: string) {
 
 AAPHREML-IRERC has completed review of your protocol. The decision is: ${decision}.
 
-If clearance is granted, continuing review is due on ${date}. Do not implement an amendment before the committee approves it. Report serious and unanticipated events within the SOP timelines.
+If clearance is granted, continuing review is due on ${date}. Do not implement an amendment before the committee approves it. Report serious and unanticipated events within the timelines required by the committee.
 
 To appeal, write to the Chairperson with the reasons and any new information. This letter is an administrative communication of a committee decision.`;
 }
@@ -339,7 +411,7 @@ function SaeModal({ id, onClose }: { id: string; onClose: () => void }) {
   const [seriousness, setSer] = useState("Hospitalization");
   return (
     <Modal title="Safety report" onClose={onClose} footer={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => file(id, event, relatedness, seriousness)}>File report</Btn></>}>
-      <p className="text-sm text-muted">File within the SOP timeline. This does not suspend the study by itself.</p>
+      <p className="text-sm text-muted">File within the committee's timeline. This does not suspend the study by itself.</p>
       <Field label="Event"><textarea className={fieldClass} value={event} onChange={(e) => setEvent(e.target.value)} /></Field>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Relatedness">

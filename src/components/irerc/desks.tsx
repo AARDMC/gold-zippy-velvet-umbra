@@ -1,28 +1,44 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
-  MEMBERS,
+  MEMBER_CATEGORIES,
+  MEMBER_SEATS,
   ROLES,
   STATUS_LABEL,
   STATUS_TONE,
   TODAY,
+  addDays,
   isOverdue,
+  isReviewerSeat,
   myReviewPending,
   reviewDue,
   visibleTo,
+  type Member,
+  type MemberInput,
 } from "@/lib/irerc/model";
 import { useIrerc } from "@/lib/irerc/store";
-import { Btn, Card, Chip, Empty, PageHead } from "@/components/irerc/ui";
+import { Btn, Card, Chip, Empty, Field, PageHead, fieldClass } from "@/components/irerc/ui";
 
 export function ReviewsDesk() {
   const acting = useIrerc((s) => s.actingReviewer);
   const setActing = useIrerc((s) => s.setActing);
+  const members = useIrerc((s) => s.members);
   const protocols = useIrerc((s) => s.protocols);
   const openProtocol = useIrerc((s) => s.openProtocol);
   const openModal = useIrerc((s) => s.openModal);
-  const mine = protocols.filter((p) => p.reviewers.includes(acting));
-  const pending = mine.filter((p) => myReviewPending(p, acting));
-  const done = mine.filter((p) => p.reviews.some((r) => r.reviewer === acting));
-  const names = ["Dr. Yonas Haile", "Dr. Meseret Assefa", "Dr. Solomon Girma", "Dr. Rahel Tesfaye", "Dr. Getachew Alemu", "Ato Mulugeta Bekele", "W/ro Hirut Desta"];
+  const reviewers = members
+    .filter((m) => m.active && isReviewerSeat(m.seat))
+    .map((m) => m.name);
+  const firstReviewer = reviewers[0] ?? "";
+  const hasActing = reviewers.includes(acting);
+  const current = hasActing ? acting : firstReviewer;
+
+  useEffect(() => {
+    if (!hasActing && firstReviewer) setActing(firstReviewer);
+  }, [hasActing, firstReviewer, setActing]);
+
+  const mine = current ? protocols.filter((p) => p.reviewers.includes(current)) : [];
+  const pending = mine.filter((p) => myReviewPending(p, current));
+  const done = mine.filter((p) => p.reviews.some((r) => r.reviewer === current));
 
   return (
     <div className="rise">
@@ -30,14 +46,22 @@ export function ReviewsDesk() {
         title="My reviews"
         lede="Twenty ethical criteria, a recommendation, and a conflict declaration. The reviewer does not issue the committee decision."
         action={
-          <label className="text-xs font-semibold tracking-wide text-muted uppercase">
-            Acting reviewer
-            <select className="mt-1 block min-h-11 rounded-xl border border-line bg-ink-2 px-3 text-sm font-semibold text-fg normal-case" value={acting} onChange={(e) => setActing(e.target.value)}>
-              {names.map((n) => <option key={n}>{n}</option>)}
-            </select>
-          </label>
+          reviewers.length ? (
+            <label className="text-xs font-semibold tracking-wide text-muted uppercase">
+              Acting reviewer
+              <select className="mt-1 block min-h-11 rounded-xl border border-line bg-ink-2 px-3 text-sm font-semibold text-fg normal-case" value={current} onChange={(e) => setActing(e.target.value)}>
+                {reviewers.map((n) => <option key={n}>{n}</option>)}
+              </select>
+            </label>
+          ) : null
         }
       />
+      {reviewers.length === 0 ? (
+        <Empty
+          title="No reviewers registered"
+          text="The Secretariat must register committee members and reviewers in the Roster before review work can begin."
+        />
+      ) : null}
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <h2 className="font-semibold">Pending</h2>
@@ -195,7 +219,7 @@ export function MonitorDesk() {
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <Chip tone={STATUS_TONE[p.status]}>{STATUS_LABEL[p.status]}</Chip>
-              {p.continuingDue ? <Chip tone={p.continuingDue <= "2026-11-30" ? "amber" : "muted"}>Continuing review {p.continuingDue}</Chip> : null}
+              {p.continuingDue ? <Chip tone={p.continuingDue <= addDays(TODAY, 45) ? "amber" : "muted"}>Continuing review {p.continuingDue}</Chip> : null}
               {p.amendment ? <Chip tone={p.amendment.status === "Approved" ? "em" : p.amendment.status === "Pending review" ? "amber" : "rose"}>{p.amendment.status}</Chip> : null}
             </div>
           </Card>
@@ -301,16 +325,103 @@ export function SystemDesk() {
 }
 
 export function RosterDesk() {
+  const role = useIrerc((s) => s.role);
+  const members = useIrerc((s) => s.members);
+  const addMember = useIrerc((s) => s.addMember);
+  const updateMember = useIrerc((s) => s.updateMember);
+  const removeMember = useIrerc((s) => s.removeMember);
+  const [editing, setEditing] = useState<string | "new" | null>(null);
+  const [form, setForm] = useState<MemberInput>(() => emptyMember());
+  const [error, setError] = useState<string | null>(null);
+
+  if (role === "investigator") {
+    return (
+      <Empty
+        title="Restricted"
+        text="The committee roster and internal role assignments are available only to authorised IRERC users."
+      />
+    );
+  }
+
+  const canEdit = role === "secretariat";
+
+  const set = <K extends keyof MemberInput>(key: K, value: MemberInput[K]) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  function startNew() {
+    setForm(emptyMember());
+    setError(null);
+    setEditing("new");
+  }
+
+  function startEdit(member: Member) {
+    setForm({
+      name: member.name,
+      category: member.category,
+      seat: member.seat,
+      institution: member.institution,
+      email: member.email,
+      phone: member.phone,
+      active: member.active,
+    });
+    setError(null);
+    setEditing(member.id);
+  }
+
+  function save() {
+    if (!form.name.trim() || !form.institution.trim()) {
+      setError("Member name and institution are required.");
+      return;
+    }
+    if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+      setError("Enter a valid email address, or leave it blank.");
+      return;
+    }
+    const duplicate = members.some(
+      (m) => m.id !== editing && m.name.toLowerCase() === form.name.trim().toLowerCase(),
+    );
+    if (duplicate) {
+      setError("A member or reviewer with that name already exists.");
+      return;
+    }
+    if (editing === "new") addMember(form);
+    else if (editing) updateMember(editing, form);
+    setEditing(null);
+    setError(null);
+  }
+
+  function toggleActive(member: Member) {
+    updateMember(member.id, {
+      name: member.name,
+      category: member.category,
+      seat: member.seat,
+      institution: member.institution,
+      email: member.email,
+      phone: member.phone,
+      active: !member.active,
+    });
+  }
+
+  function remove(member: Member) {
+    if (!window.confirm(`Remove ${member.name} from the roster? Assigned reviewers cannot be removed; mark them inactive instead.`)) return;
+    removeMember(member.id);
+  }
+
   const duties: [string, string][] = [
     ["Investigator", "Submits a complete package, conducts the study as approved, requests amendments before changing the protocol, and reports safety, deviations, progress, and close-out on time."],
-    ["Secretariat", "Receives, screens, numbers, assigns, builds the agenda, issues action letters, and keeps the archive. No authority to approve a study."],
+    ["Secretariat", "Receives, screens, numbers, assigns, builds the agenda, issues action letters, and keeps the archive. The Secretariat registers and maintains the member and reviewer roster."],
     ["Reviewer", "Reviews only assigned protocols, completes the assessment, declares conflicts, and presents at the meeting."],
-    ["Chairperson", "Maintains quorum, calls the vote, signs the decision, and may approve items the SOP allows by expedited or exemption review."],
+    ["Chairperson", "Maintains quorum, calls the vote, signs the decision, and may approve items the committee's procedures allow by expedited or exemption review."],
     ["System", "Access control, version history, and the audit trail. Support only — never a voter."],
   ];
+
   return (
     <div className="rise">
-      <PageHead title="Roles and roster" lede="Duties follow the committee’s SOP. The seat, not the software, carries the authority." />
+      <PageHead
+        title="Roster"
+        lede="Duties follow the committee's procedures. The Secretariat registers members and reviewers; the seat, not the software, carries the authority."
+      />
+
       <div className="grid gap-3 md:grid-cols-2">
         {duties.map(([title, text]) => (
           <Card key={title} className="p-4">
@@ -319,24 +430,111 @@ export function RosterDesk() {
           </Card>
         ))}
       </div>
+
+      {editing ? (
+        <Card className="mt-4 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">{editing === "new" ? "Register member or reviewer" : "Edit member or reviewer"}</h2>
+            <Btn onClick={() => { setEditing(null); setError(null); }}>Cancel</Btn>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label="Full name *">
+              <input className={fieldClass} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Dr. Abebe Kebede" />
+            </Field>
+            <Field label="Seat *">
+              <select className={fieldClass} value={form.seat} onChange={(e) => set("seat", e.target.value as MemberInput["seat"])}>
+                {MEMBER_SEATS.map((seat) => <option key={seat}>{seat}</option>)}
+              </select>
+            </Field>
+            <Field label="Category / expertise *">
+              <select className={fieldClass} value={form.category} onChange={(e) => set("category", e.target.value)}>
+                {MEMBER_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+              </select>
+            </Field>
+            <Field label="Institution *">
+              <input className={fieldClass} value={form.institution} onChange={(e) => set("institution", e.target.value)} placeholder="e.g. Addis Ababa University" />
+            </Field>
+            <Field label="Email">
+              <input className={fieldClass} type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="name@institution.org" />
+            </Field>
+            <Field label="Telephone">
+              <input className={fieldClass} type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+251 91 xxx xxxx" />
+            </Field>
+          </div>
+          <label className="mt-3 flex min-h-11 items-center gap-3 text-sm">
+            <input type="checkbox" checked={form.active} onChange={(e) => set("active", e.target.checked)} />
+            Active — may be assigned to new reviews
+          </label>
+          {error ? <p className="mt-3 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose">{error}</p> : null}
+          <div className="mt-3 flex gap-2">
+            <Btn kind="go" onClick={save}>Save member</Btn>
+            <Btn onClick={() => { setEditing(null); setError(null); }}>Cancel</Btn>
+          </div>
+        </Card>
+      ) : null}
+
       <Card className="mt-4 overflow-hidden">
-        <h2 className="border-b border-line px-4 py-3 font-semibold">Committee roster</h2>
-        <ul className="divide-y divide-line">
-          {MEMBERS.map((m) => (
-            <li key={m.name} className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <div className="grid size-10 place-items-center rounded-full bg-panel-2 text-xs font-bold">{initials(m.name)}</div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold">{m.name}</p>
-                <p className="text-xs text-muted">{m.institution}</p>
-              </div>
-              <Chip tone={m.lay ? "amber" : "sky"}>{m.category}</Chip>
-              <span className="text-xs text-muted">{m.seat}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+          <div>
+            <h2 className="font-semibold">Registered members and reviewers</h2>
+            <p className="text-xs text-muted">
+              {members.length} registered · {members.filter((m) => m.active && isReviewerSeat(m.seat)).length} active reviewers
+            </p>
+          </div>
+          {canEdit ? <Btn kind="primary" onClick={startNew}>Register member</Btn> : null}
+        </div>
+        {members.length === 0 ? (
+          <div className="p-4">
+            <Empty
+              title="No members registered"
+              text={canEdit ? "Use Register member to add the first committee member or reviewer." : "The Secretariat has not registered any committee members or reviewers yet."}
+            />
+          </div>
+        ) : (
+          <ul className="divide-y divide-line">
+            {members.map((m) => (
+              <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <div className="grid size-10 place-items-center rounded-full bg-panel-2 text-xs font-bold">{initials(m.name)}</div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">
+                    {m.name}
+                    {!m.active ? <span className="ml-2 rounded-full border border-amber/30 bg-amber/10 px-2 py-0.5 text-[10px] font-semibold text-amber">Inactive</span> : null}
+                  </p>
+                  <p className="text-xs text-muted">{m.institution}{m.email ? ` · ${m.email}` : ""}{m.phone ? ` · ${m.phone}` : ""}</p>
+                </div>
+                <Chip tone={m.lay ? "amber" : "sky"}>{m.category}</Chip>
+                <Chip tone={isReviewerSeat(m.seat) ? "em" : "sky"}>{m.seat}</Chip>
+                {canEdit ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Btn className="px-3" onClick={() => startEdit(m)}>Edit</Btn>
+                    <Btn className="px-3" onClick={() => toggleActive(m)}>{m.active ? "Deactivate" : "Activate"}</Btn>
+                    <Btn className="px-3" kind="danger" onClick={() => remove(m)}>Delete</Btn>
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
+      {!canEdit ? (
+        <p className="mt-3 text-xs text-muted">
+          Only the Secretariat can register or edit members and reviewers. You are viewing the roster in read-only mode.
+        </p>
+      ) : null}
     </div>
   );
+}
+
+function emptyMember(): MemberInput {
+  return {
+    name: "",
+    category: MEMBER_CATEGORIES[0],
+    seat: "Member",
+    institution: "",
+    email: "",
+    phone: "",
+    active: true,
+  };
 }
 
 function initials(name: string) {
